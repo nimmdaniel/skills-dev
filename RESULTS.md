@@ -76,3 +76,8 @@ in ein inzwischen anderes Konto schreiben.
 - Hosting-CI: https://github.com/nimmsel23/vitalos/actions/runs/39962182296
 - Rules/Katalog: https://github.com/nimmsel23/vitalos/actions/runs/39962251260
 - Echte Nutzeranmeldung und Zweigeräte-Sync wurden nicht im Browser abgenommen.
+
+
+## 2026-10-31 — Dev-Projekte unter ~/dev
+
+Lokale Entwicklungspfade und betroffene Verknüpfungen auf `~/dev/*-dev` umgestellt. Runtime-Daten, Branches und Release-Checkouts behalten ihre Zuständigkeit. Keine Pushes oder Releases. Gesamter Umzug und Prüfungen: `~/RESULTS.md`.
