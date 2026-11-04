@@ -15,9 +15,17 @@
     "test:rules": "firebase emulators:exec --only firestore --project demo-skills --config firebase.skills-emulator.json \"node tests/firestore.test.mjs\"",
     "test:sw": "node tests/service-worker.test.mjs",
     "catalog:seed": "node scripts/seed-skills-catalog.mjs",
-    "test:designs": "node scripts/test-design-integration.mjs"
+    "test:designs": "node scripts/test-design-integration.mjs",
+    "build:native": "vite build --mode native",
+    "native:sync": "pnpm run build:native && cap sync",
+    "native:android": "cap open android",
+    "build:android": "pnpm run native:sync && cd android && ./gradlew assembleDebug",
+    "run:android": "pnpm run native:sync && cap run android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0",
     "firebase": "^13.1.0",
     "lucide-react": "0.453.0",
     "react": "18.3.1",
@@ -25,6 +33,7 @@
     "recharts": "3.8.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@firebase/rules-unit-testing": "^6.0.0",
     "@vitejs/plugin-react": "4.7.0",
     "autoprefixer": "10.5.0",

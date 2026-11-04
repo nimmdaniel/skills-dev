@@ -35,7 +35,9 @@ Runner bleibt lokal; ein Stufenindex allein bedeutet keine Meisterschaft.
 
 `pnpm install`, `pnpm run dev` (Vite), `pnpm run build` (inkl. Stempel),
 `pnpm run firebase` (Build + `firebase deploy --only hosting:skills`),
-`pnpm run deploy` (deployt das vorhandene `dist/` ohne Build-Schritt).
+`pnpm run deploy` (deployt das vorhandene `dist/` ohne Build-Schritt),
+`pnpm run build:android` (baut natives Bundle & Debug-APK),
+`pnpm run run:android` (deployt auf Android-Gerät/Emulator).
 
 ## Integration und Release (2026-10-17)
 
