@@ -1,6 +1,7 @@
 // One framework-independent runner for React, the design variants and Android.
 // Clock ticks update the display; elapsed time comes from a clock anchor.
-const PREP_MS = 3000;
+// No countdowns anywhere: start and "weiter" are taps, holds and rests count upwards.
+const PREP_MS = 0;
 const MAX_UNOBSERVED_MS = 10000;
 const clone = value => JSON.parse(JSON.stringify(value));
 const nonNegative = value => Number.isFinite(value) && value >= 0;
@@ -111,34 +112,30 @@ export function createRunner({ skill, stage, blocks, resume = null, onUpdate = (
       return false;
     }
     r.activeDurationMs += delta;
-    if (r.phase === 'work') r.workMs += delta;
-    if (r.phase !== 'work' || r.isHold) r.left = Math.max(0, r.left - delta);
+    // Work and rest are stopwatches (elapsed time in workMs); `left` only tells how much
+    // of the recommended rest remains and never advances anything by itself.
+    if (r.phase === 'work' || r.phase === 'rest') r.workMs += delta;
+    if (r.phase === 'rest') r.left = Math.max(0, r.left - delta);
     return true;
   }
-  r.tick = () => {
-    if (!sample()) return;
-    if (r.left <= 0) {
-      if (r.phase === 'prep') { move('work', r.isHold ? r.p.seconds * 1000 : 0); checkpoint(); return; }
-      if (r.phase === 'rest') { next(); checkpoint(); return; }
-      if (r.phase === 'work' && r.isHold) { finishSet(false); return; }
-    }
-    notify();
-  };
+  r.tick = () => { if (sample()) notify(); };
   function finishSet(sampleFirst = true) {
     if (r.phase !== 'work') return;
     if (sampleFirst && !r.paused) sample();
     if (r.paused && r.interruption) return;
     // Index assignment makes even a restored, already-recorded set idempotent.
-    r.log[r.bi][r.si] = r.isHold ? Math.min(r.p.seconds, Math.floor(r.workMs / 1000)) : r.reps;
-    if (r.si + 1 >= r.p.sets && r.bi + 1 >= r.blocks.length) finish('completed');
-    else move('rest', r.p.restSeconds * 1000);
+    // The target is a minimum: everything above it is recorded as extra performance.
+    r.log[r.bi][r.si] = r.isHold ? Math.floor(r.workMs / 1000) : r.reps;
+    // Always rest/review next, also after the very last set: the result can still be
+    // adjusted with the slider before moving on.
+    move('rest', r.p.restSeconds * 1000);
     checkpoint();
   }
   r.finishSet = () => finishSet();
   r.skip = () => {
     if (r.paused || !['prep', 'rest'].includes(r.phase)) return;
     if (!sample()) return;
-    if (r.phase === 'prep') move('work', r.isHold ? r.p.seconds * 1000 : 0);
+    if (r.phase === 'prep') move('work', 0);
     else next();
     checkpoint();
   };
@@ -157,10 +154,12 @@ export function createRunner({ skill, stage, blocks, resume = null, onUpdate = (
     if (r.phase !== 'work' || r.isHold || !Number.isFinite(delta)) return;
     r.reps = Math.max(0, Math.round(r.reps + delta)); checkpoint();
   };
-  r.correctSet = (blockIndex, setIndex, value) => {
+  // `live` is for sliders: store the value without re-rendering the control being dragged.
+  r.correctSet = (blockIndex, setIndex, value, { live = false } = {}) => {
     if (!nonNegative(value) || !Number.isInteger(blockIndex) || !Number.isInteger(setIndex) || r.log[blockIndex]?.[setIndex] === undefined) return false;
-    r.log[blockIndex][setIndex] = r.blocks[blockIndex].type === 'reps' ? Math.round(value) : value;
-    checkpoint(); return true;
+    r.log[blockIndex][setIndex] = Math.round(value);
+    if (live) r.persist(); else checkpoint();
+    return true;
   };
   r.pause = () => {
     if (r.phase === 'done') return;

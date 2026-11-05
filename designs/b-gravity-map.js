@@ -2,7 +2,7 @@
 import Core from './core.js';
 import css from './b-gravity-map.css?inline';
 
-const SEL = '[data-node],[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock], [data-end],[data-rpe],[data-save],[data-exit],[data-video]';
+const SEL = '[data-node],[data-open],[data-back],[data-run],[data-train],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock], [data-end],[data-rpe],[data-save],[data-exit],[data-video]';
 
 /* Sternbild-Geometrie (deterministisch je Skill) */
 function rng(seed) {
@@ -94,7 +94,7 @@ function mount(host) {
   }
 
   function renderDetail(id) {
-    const s = Core.byId(id), st = Core.stage(id), p = s.progressions[st], n = s.progressions.length, last = Core.done(s);
+    const s = Core.byId(id), st = Core.stage(id), ts = Core.trainStage(id), p = s.progressions[ts], n = s.progressions.length, last = Core.done(s);
     const hist = Core.history(id);
     app.innerHTML = `<div class="wrap">
       <button class="back" data-back>← Sternkarte</button>
@@ -107,12 +107,9 @@ function mount(host) {
         <div class="t">${Core.esc(p.name)}</div><div class="g">${Core.target(p)}</div>
         <button class="ignite" data-run><i>▶</i> Zünden</button>
       </div>
-      <div class="actions">
-        ${!last ? '<button class="ghost" data-master>Stufe / Meisterschaft bestätigen ↑</button>' : ''}
-        ${st > 0 || last ? '<button class="ghost" data-down>Einen zurück ↓</button>' : ''}
-      </div>
+      <div class="actions">${Core.expHTML(id)}</div>
       <h3 class="sub">Alle Sterne</h3>
-      <div class="chainlist">${s.progressions.map((q, k) => `<div class="row ${k < st ? 'done' : k === st ? 'cur' : ''}" data-vrow><em>${Core.esc(q.name)}</em><span class="g">${Core.short(q)}<button class="vbtn" data-video="${k}">Video</button></span></div>`).join('')}</div>
+      <div class="chainlist">${s.progressions.map((q, k) => `<div class="row ${k < st ? 'done' : k === st ? 'cur' : ''}" data-vrow ${k <= st ? 'data-train="' + k + '"' : 'data-locked aria-disabled="true"'}><em>${Core.esc(q.name)}</em><span class="g">${Core.short(q)}<button class="vbtn" data-video="${k}">Video</button></span></div>`).join('')}</div>
       ${hist.length ? `<h3 class="sub">Logbuch</h3><div class="chainlist">${hist.slice().reverse().map(h => `<div class="row done"><em>${h.reset ? '↓ ' : '✓ '}${Core.esc(h.name)}</em><span class="g">${Core.date(h.masteredAt)}</span></div>`).join('')}</div>` : ''}
     </div>`;
     scrollTo(0, 0);
@@ -122,19 +119,19 @@ function mount(host) {
     let el = $('#run');
     if (!el) { el = document.createElement('div'); el.id = 'run'; $('.root').appendChild(el); }
     const b = r.p, isHold = r.isHold, R = 150, C = 2 * Math.PI * R;
-    const frac = r.phase === 'done' ? 1 : r.phase === 'work' && !isHold ? Math.min(1, r.workMs / 1000 / 30) : r.total ? 1 - r.left / r.total : 0;
+    const frac = r.phase === 'done' ? 1 : r.phase === 'work' ? Core.runView(r).progress : r.total ? 1 - r.left / r.total : 0;
     const ang = frac * 2 * Math.PI - Math.PI / 2, px = 170 + R * Math.cos(ang), py = 170 + R * Math.sin(ang);
-    const num = r.phase === 'done' ? '✓' : r.phase === 'work' && !isHold ? r.reps : Core.secs(r.left);
+    const num = Core.runNum(r);
     const sig = r.sig();
     if (el.dataset.sig === sig) {
       el.querySelector('.arc').setAttribute('stroke-dashoffset', C * (1 - frac));
       const pl = el.querySelector('.planet'); pl.setAttribute('cx', px); pl.setAttribute('cy', py);
-      el.querySelector('.n').textContent = num; return;
+      el.querySelector('.n').textContent = num; Core.paintLive(el, r); return;
     }
     el.dataset.sig = sig; el.className = 'run ' + r.phase;
-    const ph = { prep: 'bereit machen', work: isHold ? 'halten' : 'Ziel ' + b.reps + ' Wdh', rest: 'schweben', done: r.metTarget() ? 'Ziel erreicht' : 'geschafft' }[r.phase];
+    const ph = { prep: 'bereit machen', work: isHold ? 'halten · min. ' + b.seconds + ' s' : 'Ziel ' + b.reps + ' Wdh', rest: 'schweben', done: r.metTarget() ? 'Ziel erreicht' : 'geschafft' }[r.phase];
     const moons = Array.from({ length: r.sets }, (_, k) => `<i class="${k < r.logCur.length ? 'on' : k === r.si && r.phase !== 'done' ? 'cur' : ''}"></i>`).join('');
-    const unit = r.phase === 'done' ? r.log[0].join(' · ') + (r.blocks[0].type === 'hold' ? ' s' : ' Wdh') : r.phase === 'work' && !isHold ? 'Wiederholungen' : 'Sekunden';
+    const unit = r.phase === 'done' ? r.log[0].join(' · ') + (r.blocks[0].type === 'hold' ? ' s' : ' Wdh') + ' · +' + (Core.runView(r).exp?.session ?? 0) + ' % EXP' : r.phase === 'work' && !isHold ? 'Wiederholungen' : 'Sekunden';
     el.innerHTML = `
       <div class="r-top"><div><div class="a">${r.phase === 'done' ? 'Workout komplett' : `${r.skill.name} · Übung ${r.bi + 1}/${r.blocks.length} · ${b.role} · Umlauf ${r.si + 1}/${r.sets}`}</div><div class="b">${Core.esc(r.phase === 'done' ? r.skill.name : b.name)}</div>
         ${r.phase !== 'done' ? '<button class="skipb" data-skipblock>Übung überspringen →</button>' : ''}</div><button class="x" data-exit>Später fortsetzen</button></div>
@@ -145,9 +142,8 @@ function mount(host) {
           <circle class="arc" cx="170" cy="170" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - frac)}" transform="rotate(-90 170 170)"/>
           <circle class="planet" cx="${px}" cy="${py}" r="7"/>
         </svg><div class="core"><div class="ph">${ph}</div><div class="n">${num}</div><div class="u">${unit}</div></div></div>
-        ${r.phase === 'work' && !isHold ? '<div class="adj"><button data-adj="-1">−</button><button data-adj="1">+</button></div>' : ''}
         ${r.phase === 'done' ? `<div class="rpe">${Core.RPE.map(o => `<button class="${r.rpe === o.id ? 'on' : ''}" data-rpe="${o.id}">${o.label}</button>`).join('')}</div>` : `<div class="moons">${moons}</div>`}
-        <div class="r-sub">${r.phase === 'done' ? 'Bewerte das Workout und speichere es.' : r.phase === 'rest' ? (r.si + 1 < r.p.sets ? 'Schwerelos. Gleich folgt Umlauf ' + (r.si + 2) + '.' : 'Schwerelos. Gleich: ' + (r.blocks[r.bi + 1]?.name || 'Ende')) : Core.target(b)}</div>
+        <div class="r-sub">${r.phase === 'done' ? 'Bewerte das Workout und speichere es.' : r.phase === 'rest' ? (r.si + 1 < r.p.sets ? 'Schwerelos. Gleich folgt Umlauf ' + (r.si + 2) + '.' : 'Schwerelos. Gleich: ' + (r.blocks[r.bi + 1]?.name || 'Ende')) : Core.runView(r).hint}</div>
       </div>
       ${r.persistenceError ? `<p role="alert">Nicht gesichert: ${Core.esc(r.persistenceError)}</p>` : ''}
       ${r.paused && r.phase !== 'done' ? '<p role="status">Pausiert · Weiter zum Fortsetzen</p>' : ''}
@@ -155,8 +151,8 @@ function mount(host) {
       ${Core.resultHTML(r)}
       ${r.phase === 'done' ? Core.qualityHTML(r) : ''}
       <div class="r-bot">
-        ${r.phase === 'work' ? `<button class="rb pri" data-fin>${isHold ? 'Früher beenden' : 'Satz fertig'}</button>` : ''}
-        ${r.phase === 'rest' ? '<button class="rb" data-add>+30s</button><button class="rb pri" data-skip>Weiter</button>' : ''}
+        ${r.phase === 'work' ? `<button class="rb pri" data-fin>${isHold ? 'Halten beenden' : 'Satz fertig'}</button>` : ''}
+        ${r.phase === 'rest' ? `<button class="rb pri" data-skip>${Core.runView(r).primaryButton}</button>` : ''}
         ${r.phase === 'prep' ? '<button class="rb pri" data-skip>Los</button>' : ''}
         ${r.phase === 'done' ? '<button class="rb pri" data-save>Speichern</button>' : `<button class="rb" data-pause>${r.paused ? 'Weiter' : 'Pause'}</button>`}
       </div>`;
@@ -176,9 +172,8 @@ function mount(host) {
     if (runner && Core.act(runner, ds)) return;
     if (ds.open) { Core.setHash(ds.open); route(); }
     else if ('back' in ds) { Core.setHash(null); route(); }
-    else if ('run' in ds) { runner = Core.runner(Core.byId(id), Core.stage(id), renderRun); runner.start(); }
-    else if ('master' in ds) { saving = true; await Core.master(Core.byId(id)); renderDetail(id); }
-    else if ('down' in ds) { saving = true; if (await Core.downgrade(Core.byId(id))) renderDetail(id); }
+    else if ('run' in ds) { runner = Core.runner(Core.byId(id), Core.trainStage(id), renderRun); runner.start(); }
+    else if ('train' in ds) { Core.setTrain(id, +ds.train); renderDetail(id); }
     else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(true); renderDetail(id); }
     else if ('exit' in ds) closeRun();
     else if ('video' in ds) Core.toggleVideo(t, Core.byId(id).progressions[+ds.video].name);

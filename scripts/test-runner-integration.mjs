@@ -41,8 +41,10 @@ function harness(resume = null, persistFails = false) {
   const { r, advance, snapshots } = harness();
   r.start();
   assert.equal(r.phase, 'prep');
-  advance(3000);
-  assert.equal(r.phase, 'work', 'Vorlauf endet nach 3 s');
+  advance(30000);
+  assert.equal(r.phase, 'prep', 'kein Countdown: der Start ist ein Tippen');
+  r.skip();
+  assert.equal(r.phase, 'work');
   const target = r.p.seconds;
   advance(4000);
   r.finishSet();
@@ -52,6 +54,7 @@ function harness(resume = null, persistFails = false) {
   assert(r.log[0][0] < target);
   assert.equal(r.phase, 'rest');
   assert(r.correctSet(0, 0, 5) && r.log[0][0] === 5, 'Korrektur ändert den richtigen Satz');
+  advance(5000); assert.equal(r.phase, 'rest', 'die Pause endet nie von selbst');
   assert(snapshots.length > 3, 'Zwischenstand wird nach Aktionen gespeichert');
   const id = r.sessionId;
   r.endEarly();
@@ -66,7 +69,7 @@ function harness(resume = null, persistFails = false) {
 {
   // Unterbrechung im Arbeitssatz: keine erfundene Leistung, Neustart nimmt pausiert wieder auf.
   const { r, advance, jump, snapshots } = harness();
-  r.start(); advance(3000); advance(2000);
+  r.start(); r.skip(); advance(2000);
   jump(60_000); // Anruf / Bildschirmsperre
   r.tick();
   assert(r.paused && r.interruption, 'lange Lücke pausiert');
@@ -82,10 +85,10 @@ function harness(resume = null, persistFails = false) {
 {
   // Speicherfehler sind sichtbar und blockieren den Runner nicht.
   const { r, advance } = harness(null, true);
-  r.start(); advance(3000);
+  r.start(); r.skip();
   await new Promise(resolve => setTimeout(resolve, 0));
   assert(r.persistenceError, 'Speicherfehler wird angezeigt');
   assert.equal(r.phase, 'work');
 }
 
-console.log('Runner integration passed: shared core in 4 surfaces, actual hold time, double tap, correction, interruption, resume, save errors');
+console.log('Runner integration passed: shared core in 4 surfaces, actual hold time, stopwatch without countdowns, double tap, correction, interruption, resume, save errors');

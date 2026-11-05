@@ -3,7 +3,7 @@ import Core from './core.js';
 import css from './a-iron-room.css?inline';
 
 const TICKER = ['Push', 'Pull', 'Core', 'Nichts geschenkt', 'Stufe für Stufe', 'Schwerkraft verliert', 'Halten', 'Wiederholen', 'Meistern'];
-const SEL = '[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock], [data-end],[data-rpe],[data-save],[data-exit],[data-video]';
+const SEL = '[data-open],[data-back],[data-run],[data-train],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock], [data-end],[data-rpe],[data-save],[data-exit],[data-video]';
 
 function mount(host) {
   const sr = host.attachShadow({ mode: 'open' });
@@ -46,7 +46,7 @@ function mount(host) {
   }
 
   function renderDetail(id) {
-    const s = Core.byId(id), st = Core.stage(id), p = s.progressions[st], last = Core.done(s);
+    const s = Core.byId(id), st = Core.stage(id), ts = Core.trainStage(id), p = s.progressions[ts], last = Core.done(s);
     const hist = Core.history(id);
     app.innerHTML = ticker() + `<div class="wrap">
       <button class="back" data-back>← Alle Skills</button>
@@ -59,14 +59,11 @@ function mount(host) {
       </div>
       <h2 class="sec rv" style="--i:3">Die Kette</h2>
       <div class="chain">
-        ${s.progressions.map((q, k) => `<div class="link rv ${k < st ? 'done' : k === st ? 'cur' : k > st + 1 ? 'lock' : ''}" style="--i:${4 + k}" data-vrow>
+        ${s.progressions.map((q, k) => `<div class="link rv ${k < st ? 'done' : k === st ? 'cur' : k > st ? 'lock' : ''}" style="--i:${4 + k}" data-vrow ${k <= st ? 'data-train="' + k + '"' : 'data-locked aria-disabled="true"'}>
           <span class="n">${Core.pad(k + 1)}</span><span class="t">${q.name}</span>
           <span class="g">${k < st ? '<span class="tag">✓ Fertig</span>' : k === st ? '<span class="tag">Jetzt</span>' : Core.short(q)}<button class="vbtn" data-video="${k}">Video</button></span></div>`).join('')}
       </div>
-      <div class="actions">
-        ${!last ? '<button class="ghost" data-master>Stufe / Meisterschaft bestätigen ↑</button>' : ''}
-        ${st > 0 || last ? '<button class="ghost" data-down>Stufe zurück ↓</button>' : ''}
-      </div>
+      <div class="actions">${Core.expHTML(id)}</div>
       ${hist.length ? `<h2 class="sec">Verlauf</h2><div class="hist">${hist.slice().reverse().map(h => `<div><b>${h.reset ? '↓ ' : '✓ '}${Core.esc(h.name)}</b><span>${h.reset ? 'zurückgesetzt · ' : ''}${Core.date(h.masteredAt)}</span></div>`).join('')}</div>` : ''}
     </div>`;
     scrollTo(0, 0);
@@ -76,15 +73,15 @@ function mount(host) {
     let el = $('#run');
     if (!el) { el = document.createElement('div'); el.id = 'run'; $('.root').appendChild(el); }
     const b = r.p, isHold = r.isHold;
-    const num = r.phase === 'done' ? '✓' : r.phase === 'work' && !isHold ? r.reps : Core.secs(r.left);
+    const num = Core.runNum(r);
     const sig = r.sig();
-    if (el.dataset.sig === sig) { el.querySelector('.r-num').textContent = num; return; }
+    if (el.dataset.sig === sig) { el.querySelector('.r-num').textContent = num; Core.paintLive(el, r); return; }
     el.dataset.sig = sig;
     const phaseTxt = { prep: 'Bereit machen', work: isHold ? 'Halten!' : 'Wiederholungen', rest: 'Pause', done: r.metTarget() ? 'Ziel erreicht' : 'Geschafft' }[r.phase];
     const pips = Array.from({ length: r.sets }, (_, k) => `<i class="${k < r.logCur.length ? 'on' : k === r.si && r.phase !== 'done' ? 'cur' : ''}"></i>`).join('');
-    const sub = r.phase === 'work' && !isHold ? `Ziel ${b.reps} Wdh — mit ± korrigieren`
+    const sub = r.phase === 'work' || r.phase === 'prep' ? Core.runView(r).hint
       : r.phase === 'rest' ? (r.si + 1 < r.p.sets ? `Gleich: Satz ${r.si + 2}/${r.p.sets}` : `Gleich: ${r.blocks[r.bi + 1]?.name || 'Ende'}`)
-      : r.phase === 'done' ? `${r.skill.name} · ${r.log[0].join(' · ')}${r.blocks[0].type === 'hold' ? ' s' : ' Wdh'}` : Core.target(b);
+      : r.phase === 'done' ? `${r.skill.name} · ${r.log[0].join(' · ')}${r.blocks[0].type === 'hold' ? ' s' : ' Wdh'} · +${Core.runView(r).exp?.session ?? 0} % EXP` : Core.target(b);
     el.className = 'run ' + r.phase;
     el.innerHTML = `<div class="hz t"></div><div class="hz b"></div>
       <div class="r-top"><div><div class="lab">${r.phase === 'done' ? 'Workout komplett' : `Übung ${r.bi + 1}/${r.blocks.length} · ${b.role} · Satz ${r.si + 1}/${r.sets}`}</div><div class="nm">${r.phase === 'done' ? r.skill.name : b.name}</div>
@@ -93,7 +90,6 @@ function mount(host) {
       <div class="r-mid">
         <div class="r-phase">${phaseTxt}</div>
         <div class="r-num ${r.phase === 'work' && isHold ? 'out' : ''}">${num}</div>
-        ${r.phase === 'work' && !isHold ? '<div class="adj"><button data-adj="-1">−</button><button data-adj="1">+</button></div>' : ''}
         <div class="r-sub">${sub}</div>
         ${r.phase === 'done' ? `<div class="rpe">${Core.RPE.map(o => `<button class="${r.rpe === o.id ? 'on' : ''}" data-rpe="${o.id}">${o.label}</button>`).join('')}</div>` : `<div class="pips">${pips}</div>`}
       </div>
@@ -103,8 +99,8 @@ function mount(host) {
       ${Core.resultHTML(r)}
       ${r.phase === 'done' ? Core.qualityHTML(r) : ''}
       <div class="r-bot ${r.phase === 'rest' ? 'three' : ''}">
-        ${r.phase === 'work' ? `<button class="r-btn pri" data-fin>${isHold ? 'Früher beenden' : 'Satz fertig'}</button>` : ''}
-        ${r.phase === 'rest' ? '<button class="r-btn" data-add>+30s</button><button class="r-btn pri" data-skip>Weiter</button>' : ''}
+        ${r.phase === 'work' ? `<button class="r-btn pri" data-fin>${isHold ? 'Halten beenden' : 'Satz fertig'}</button>` : ''}
+        ${r.phase === 'rest' ? `<button class="r-btn pri" data-skip>${Core.runView(r).primaryButton}</button>` : ''}
         ${r.phase === 'prep' ? '<button class="r-btn pri" data-skip>Los</button>' : ''}
         ${r.phase === 'done' ? '<button class="r-btn pri" data-save>Speichern</button>' : `<button class="r-btn" data-pause>${r.paused ? 'Weiter' : 'Pause'}</button>`}
       </div>`;
@@ -123,9 +119,8 @@ function mount(host) {
     if (runner && Core.act(runner, ds)) return;
     if (ds.open) { Core.setHash(ds.open); route(); }
     else if ('back' in ds) { Core.setHash(null); route(); }
-    else if ('run' in ds) { runner = Core.runner(Core.byId(id), Core.stage(id), renderRun); runner.start(); }
-    else if ('master' in ds) { saving = true; await Core.master(Core.byId(id)); renderDetail(id); }
-    else if ('down' in ds) { saving = true; if (await Core.downgrade(Core.byId(id))) renderDetail(id); }
+    else if ('run' in ds) { runner = Core.runner(Core.byId(id), Core.trainStage(id), renderRun); runner.start(); }
+    else if ('train' in ds) { Core.setTrain(id, +ds.train); renderDetail(id); }
     else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(true); renderDetail(id); }
     else if ('exit' in ds) { closeRun(); }
     else if ('video' in ds) Core.toggleVideo(t, Core.byId(id).progressions[+ds.video].name);

@@ -153,3 +153,22 @@ Neues gemeinsames Modul `navigation.js` für die Original-Karte und alle drei De
   ab; Gast-Daten und der gemeinsame Firebase-Nutzer bleiben. Firestore-Rules erlauben dafür
   Owner-Delete auf `skillsUsers/{uid}/events` (Deploy über VitalOS nötig, Emulator-Test grün).
 - Debug-APK `at.vitalos.skills` gebaut (JDK 21); keine Geräteabnahme, native Anmeldung offen.
+
+## 2026-11-05 — Feste Progression, EXP und Stoppuhr-Runner
+
+- Jeder Skill folgt seiner festen Stufenfolge. Eine Stufe wird nur durch 100 % EXP freigeschaltet;
+  die nächste bleibt gesperrt. Es gibt kein manuelles Hochsetzen und kein „Stufe zurück“.
+  Bereits freigeschaltete Stufen dürfen weiter trainiert werden (EXP zählt nur für die aktuelle).
+  Alte manuelle Stufenereignisse gelten als Startpunkt. Regeln: `data/exp.js`, Tests: `tests/exp.test.mjs`.
+- EXP: Mindestziel pro Satz = `advancement.minimumValue` (Sekunden bzw. Wiederholungen). Ein Satz am
+  Mindestziel gibt den vollen Basisanteil (100 % / (qualifyingSessions × Sätze)), darunter anteilig,
+  darüber Bonus bis +50 % des Basisanteils. Mehr Sätze als vorgeschrieben zählen nicht, gleiche
+  Einheiten-IDs zählen einmal. Die alten Regeln (Sessions/Tage, Technik-Bestätigung) gelten nicht mehr.
+- Runner ohne Countdowns: Start per Tippen, Holds und Pausen zählen hoch, Pause endet nie von selbst.
+  Das Ziel ist ein Minimum; alles darüber ist Mehrleistung. Wiederholungen: „Satz fertig“, danach die
+  echte Zahl per Slider einstellen (auch beim letzten Satz). Der Slider gilt, bis es weitergeht.
+  Einseitige Übungen zeigen den Hinweis „beide Seiten gleich oft, schwächere Seite eintragen“.
+- Ein gemeinsames Anzeigemodell (`runner/view.js`) speist React-Karte und die Designs A/B/C.
+- Leistungsdatenbank: jede Einheit bleibt als unveränderliches Ereignis (IndexedDB/Firestore) mit
+  Sekunden bzw. Wiederholungen je Satz. Lesen: `progressStore.sets({skillId, stageId, since})` bzw.
+  `flattenSets()` in `data/model.js`; Fortschritt/EXP über `getSnapshot().progress[skillId]`.

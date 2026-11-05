@@ -1,6 +1,7 @@
 import { SKILLS } from '../data/catalog.js';
 import { createRunner } from '../runner/engine.js';
 import { buildWorkoutBlocks } from '../runner/blocks.js';
+import { runnerView } from '../runner/view.js';
 import * as navigation from '../navigation.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -26,7 +27,7 @@ function nodes(tree, match) {
   return [...(match(tree) ? [tree] : []), ...(tree.children || []).flat(Infinity).flatMap(child => nodes(child, match))];
 }
 const player = await compile('../ExerciseVideo.jsx', '', { './exerciseVideos.json': { __esModule: true, default: catalog } });
-const app = await compile('../SkillsCard.jsx', '\nexport { WorkoutRunner, SkillDetailScreen };', { './runner/engine.js':{createRunner}, './runner/blocks.js':{buildWorkoutBlocks}, './runner/lifecycle.js':{}, './ExerciseVideo.jsx': { __esModule: true, default: player.default }, './data/catalog.js': { SKILLS, assessStage: () => ({qualified:0,days:0,ready:false}) }, './data/store.js': { progressStore: {runner: () => null, getSnapshot: () => ({owner:'test'})} }, './navigation.js': navigation });
+const app = await compile('../SkillsCard.jsx', '\nexport { WorkoutRunner, SkillDetailScreen };', { './runner/engine.js':{createRunner}, './runner/blocks.js':{buildWorkoutBlocks}, './runner/lifecycle.js':{}, './runner/view.js':{runnerView}, './ExerciseVideo.jsx': { __esModule: true, default: player.default }, './data/catalog.js': { SKILLS, assessStage: () => ({qualified:0,days:0,ready:false}) }, './data/store.js': { progressStore: {runner: () => null, getSnapshot: () => ({owner:'test'})} }, './navigation.js': navigation });
 const names = new Set([...app.SKILLS.flatMap(skill => skill.progressions.map(p => p.name)), ...app.SKILLS.flatMap(skill => buildWorkoutBlocks(skill,0).map(p => p.name))]);
 assert.equal(names.size, Object.keys(catalog).length, 'catalog must cover every progression and conditioning exercise');
 for (const name of names) assert(player.videoForExercise(name), name);
