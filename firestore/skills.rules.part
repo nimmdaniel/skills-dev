@@ -23,7 +23,8 @@
       }
       allow read: if owner();
       allow create: if owner() && valid();
-      // Idempotent replay is allowed; history edits and deletions are denied.
+      // Idempotent replay is allowed; history edits are denied. Only the owner may
+      // delete, used solely by in-app account deletion (Play Store requirement).
       allow update: if owner() && request.resource.data == resource.data;
-      allow delete: if false;
+      allow delete: if owner();
     }

@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// Supply upload credentials from the terminal/CI secret store, never from Git.
+def uploadEnvironment = ['SKILLS_UPLOAD_STORE_FILE', 'SKILLS_UPLOAD_STORE_PASSWORD',
+                         'SKILLS_UPLOAD_KEY_ALIAS', 'SKILLS_UPLOAD_KEY_PASSWORD']
+def hasUploadSigning = uploadEnvironment.every { System.getenv(it)?.trim() }
+def releaseCode = providers.environmentVariable('SKILLS_VERSION_CODE').getOrElse('1')
+if (!(releaseCode ==~ /[1-9][0-9]*/) || releaseCode.toLong() > 2100000000L) {
+    throw new GradleException('SKILLS_VERSION_CODE must be a positive Play version code <= 2100000000')
+}
+
 android {
     namespace = "at.vitalos.skills"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +16,8 @@ android {
         applicationId "at.vitalos.skills"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode releaseCode.toInteger()
+        versionName providers.environmentVariable('SKILLS_VERSION_NAME').getOrElse('1.0')
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,11 +25,38 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasUploadSigning) {
+            upload {
+                storeFile file(System.getenv('SKILLS_UPLOAD_STORE_FILE'))
+                storePassword System.getenv('SKILLS_UPLOAD_STORE_PASSWORD')
+                keyAlias System.getenv('SKILLS_UPLOAD_KEY_ALIAS')
+                keyPassword System.getenv('SKILLS_UPLOAD_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasUploadSigning) signingConfig signingConfigs.upload
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+def validateReleaseConfiguration = tasks.register('validateReleaseConfiguration') {
+    doLast {
+        if (!hasUploadSigning) {
+            throw new GradleException('Release signing is missing. Supply all SKILLS_UPLOAD_* variables listed in docs/ANDROID-RELEASE.md; debug builds do not need them.')
+        }
+        if (!file(System.getenv('SKILLS_UPLOAD_STORE_FILE')).isFile()) {
+            throw new GradleException('SKILLS_UPLOAD_STORE_FILE must point to an existing upload keystore')
+        }
+    }
+}
+tasks.configureEach {
+    if (name in ['bundleRelease', 'assembleRelease', 'packageRelease', 'signReleaseBundle']) {
+        dependsOn(validateReleaseConfiguration)
     }
 }
 

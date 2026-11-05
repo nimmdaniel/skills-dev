@@ -33,7 +33,7 @@ test('built worker precaches bundles and catalogue, seeds IndexedDB and serves c
   assert.equal(stored.skills.length,14);
   network = false;
   let response;
-  handlers.fetch.forEach(handler => handler({request:{method:'GET',url:scope+'skills-catalog.v1.json',mode:'cors'},respondWith:p => { assert(!response,'only one handler responds'); response=p; }}));
+  handlers.fetch.forEach(handler => handler({request:{method:'GET',url:scope+'skills-catalog.v1.json',mode:'cors',headers:new Headers()},respondWith:p => { assert(!response,'only one handler responds'); response=p; }}));
   assert.equal((await (await response).json()).skills.length,14);
   db.close();
 });

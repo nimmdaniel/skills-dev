@@ -72,3 +72,12 @@ export async function loadRunner(owner) {
   if (row) return row.state;
   return JSON.parse(localStorage.getItem(prefix+owner+':runner') || 'null');
 }
+
+// Removes one account's device data (events, runner draft, localStorage copies).
+export async function deleteOwner(owner) {
+  if (!owner || owner === 'guest') throw new Error('Gastdaten werden nicht über die Kontolöschung entfernt');
+  const rows = (await transaction('events','readonly',s => s.getAll())).filter(r => r.owner === owner);
+  for (const row of rows) await transaction('events','readwrite',s => s.delete(row.key));
+  await transaction('runner','readwrite',s => s.delete(owner));
+  try { localStorage.removeItem(prefix + owner); localStorage.removeItem(prefix + owner + ':runner'); } catch { /* IndexedDB is authoritative */ }
+}

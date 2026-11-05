@@ -3,6 +3,7 @@ export const SKILLS_WORKOUT_COMPLETE_EVENT = 'skills:workout-completed';
 export function toHostWorkout(skill, stage, sessionData) {
   const endedAt = Date.parse(sessionData.timestamp);
   return {
+    ...(sessionData.sessionId ? { id: `skills-${sessionData.sessionId}`, sourceSessionId: sessionData.sessionId } : {}),
     source: 'skills',
     block: 'Calisthenics',
     modality: 'calisthenics',

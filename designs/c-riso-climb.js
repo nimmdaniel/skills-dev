@@ -2,7 +2,7 @@
 import Core from './core.js';
 import css from './c-riso-climb.css?inline';
 
-const SEL = '[data-filter],[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock],[data-rpe],[data-save],[data-exit],[data-video]';
+const SEL = '[data-filter],[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock], [data-end],[data-rpe],[data-save],[data-exit],[data-video]';
 const NAME = Core.CATS;
 
 function mount(host) {
@@ -97,13 +97,17 @@ function mount(host) {
     const unit = r.phase === 'done' ? r.log[0].join(' · ') + (r.blocks[0].type === 'hold' ? ' sek' : ' wdh') : r.phase === 'work' && !isHold ? 'wiederholungen' : 'sekunden';
     el.innerHTML = `
       <div class="r-top"><div><div class="a">${r.phase === 'done' ? 'workout komplett' : `${r.skill.name} · ${b.role} ${r.bi + 1}/${r.blocks.length} · satz ${r.si + 1}/${r.sets}`}</div><div class="b">${Core.esc(r.phase === 'done' ? r.skill.name : b.name)}</div>
-        ${r.phase !== 'done' ? '<button class="skipb" data-skipblock>übung überspringen →</button>' : ''}</div><button class="x" data-exit>✕</button></div>
+        ${r.phase !== 'done' ? '<button class="skipb" data-skipblock>übung überspringen →</button>' : ''}</div><button class="x" data-exit>Später</button></div>
       <div class="r-mid">
         <div class="disc"><div class="ph">${ph}</div><div class="n pop">${num}</div><div class="u">${unit}</div></div>
         ${r.phase === 'work' && !isHold ? '<div class="adj"><button data-adj="-1">−</button><button data-adj="1">+</button></div>' : ''}
         ${r.phase === 'done' ? `<div class="rpe">${Core.RPE.map(o => `<button class="${r.rpe === o.id ? 'on' : ''}" data-rpe="${o.id}">${o.label.toLowerCase()}</button>`).join('')}</div>` : `<div class="checks">${checks}</div>`}
         <div class="r-sub">${r.phase === 'done' ? 'bewerte das workout und speichere es.' : r.phase === 'rest' ? (r.si + 1 < r.p.sets ? `gleich: satz ${r.si + 2}` : `gleich: ${Core.esc(r.blocks[r.bi + 1]?.name || 'ende')}`) : Core.target(b)}</div>
       </div>
+      ${r.persistenceError ? `<p role="alert">Nicht gesichert: ${Core.esc(r.persistenceError)}</p>` : ''}
+      ${r.paused && r.phase !== 'done' ? '<p role="status">Pausiert · Weiter zum Fortsetzen</p>' : ''}
+      ${r.phase !== 'done' ? '<button data-end style="min-height:48px">Training beenden</button>' : ''}
+      ${Core.resultHTML(r)}
       ${r.phase === 'done' ? Core.qualityHTML(r) : ''}
       <div class="r-bot">
         ${r.phase === 'work' ? `<button class="rb pri" data-fin>${isHold ? 'früher beenden' : 'satz fertig ✓'}</button>` : ''}
@@ -114,7 +118,7 @@ function mount(host) {
     if (r.phase === 'done') confetti(el);
   }
 
-  function closeRun() { if (runner) runner.stop(); runner = null; $('#run')?.remove(); }
+  function closeRun(saved = false) { if (runner) runner.stop({ persist: !saved }); runner = null; $('#run')?.remove(); }
   function route() { const id = Core.hash(); id && Core.byId(id) ? renderDetail(id) : renderList(); }
 
   let saving = false;
@@ -131,21 +135,23 @@ function mount(host) {
     else if ('run' in ds) { runner = Core.runner(Core.byId(id), Core.stage(id), renderRun); runner.start(); }
     else if ('master' in ds) { saving = true; await Core.master(Core.byId(id)); renderDetail(id); }
     else if ('down' in ds) { saving = true; if (await Core.downgrade(Core.byId(id))) renderDetail(id); }
-    else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(); renderDetail(id); }
+    else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(true); renderDetail(id); }
     else if ('exit' in ds) closeRun();
     else if ('video' in ds) Core.toggleVideo(t, Core.byId(id).progressions[+ds.video].name);
     } catch (error) { window.alert(`Nicht gespeichert: ${error.message}`); } finally { saving = false; }
   };
   const onKey = e => { if (e.key === 'Escape' && runner) { e.preventDefault(); closeRun(); } };
-  const onQuality = e => Core.qualityInput(runner,e.target);
+  const onQuality = e => { if (e.target.dataset.result === undefined) Core.qualityInput(runner,e.target); };
+  const onResult = e => { if (e.target.dataset.result !== undefined) Core.qualityInput(runner,e.target); };
   sr.addEventListener('input',onQuality);
+  sr.addEventListener('change',onResult);
   const stopProgress = Core.subscribe(() => { if (!runner) route(); });
   sr.addEventListener('click', onClick);
   addEventListener('keydown', onKey);
   const stopNav = Core.nav(sr, route, () => !runner && !saving);
   route();
 
-  return () => { stopNav(); stopProgress(); sr.removeEventListener('input',onQuality); closeRun(); sr.removeEventListener('click', onClick); removeEventListener('keydown', onKey); };
+  return () => { stopNav(); stopProgress(); sr.removeEventListener('input',onQuality); sr.removeEventListener('change',onResult); closeRun(); sr.removeEventListener('click', onClick); removeEventListener('keydown', onKey); };
 }
 
 export default {

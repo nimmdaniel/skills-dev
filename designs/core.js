@@ -1,5 +1,8 @@
 // All designs use the Skills event store; there is no design-specific progress copy.
-import { SKILLS, buildWorkoutBlocks } from '../SkillsCard.jsx';
+import { SKILLS } from '../data/catalog.js';
+import { buildWorkoutBlocks } from '../runner/blocks.js';
+import { createRunner } from '../runner/engine.js';
+import { attachRunnerLifecycle } from '../runner/lifecycle.js';
 import { videoForExercise } from '../ExerciseVideo.jsx';
 import { designProgress } from '../data/designProgress.js';
 import { progressStore } from '../data/store.js';
@@ -42,7 +45,7 @@ const Core = {
 
   master: skill => designProgress.master(skill),
   downgrade: skill => designProgress.downgrade(skill),
-  saveWorkout: r => designProgress.saveWorkout(r.skill,r.stage,r.sessionData(),r.quality),
+  saveWorkout: r => designProgress.saveWorkout(r.skill,r.stage,r.sessionData(),r.quality,r.owner),
   qualityHTML(r) {
     const q = r.quality || {};
     return `<fieldset style="display:grid;gap:8px;padding:12px;font:12px system-ui">
@@ -53,91 +56,31 @@ const Core = {
     </fieldset>`;
   },
   qualityInput(r,target) {
-    if (!r || !target.dataset.quality) return;
+    if (!r) return;
+    if (target.dataset.result !== undefined) { r.correctSet(r.bi,r.si,Number(target.value)); return; }
+    if (!target.dataset.quality) return;
     r.quality ||= {};
     r.quality[target.dataset.quality] = target.type === 'checkbox' ? target.checked : target.value;
     r.persist?.();
+  },
+  resultHTML(r) {
+    if (r.phase !== 'rest' || r.logCur[r.si] === undefined) return '';
+    return `<label style="display:block;padding:12px">Letzter Satz (${r.isHold ? 'Sek.' : 'Wdh'}) <input data-result type="number" min="0" step="1" value="${r.logCur[r.si]}" style="width:90px;min-height:44px;color:#111;background:#fff"></label>`;
   },
   subscribe: designProgress.subscribe,
 
   // Runner: prep → work → rest über Primär/Sekundär/Conditioning-Blöcke (wie WorkoutRunner)
   runner(skill, stage, onUpdate) {
-    const blocks = buildWorkoutBlocks(skill, stage);
     const owner = progressStore.getSnapshot().owner;
     const saved = progressStore.runner();
     const resume = saved?.skillId === skill.id && saved?.stage === stage ? saved : null;
-    const r = { skill, stage, blocks, bi: 0, si: 0, phase: 'prep', total: PREP_MS, left: PREP_MS, workMs: 0, paused: false, rpe: null, startedAt: Date.now(), log: blocks.map(() => []), reps: blocks[0].type === 'reps' ? blocks[0].reps : 0 };
-    if (resume) {
-      Object.assign(r,{bi:resume.blockIndex,si:resume.setIndex,phase:resume.phase === 'done' ? 'done' : 'prep',log:resume.log,rpe:resume.rpe,startedAt:resume.startedAt,quality:resume.quality || {}});
-      r.reps = resume.actualReps ?? (blocks[r.bi].reps || 0);
-    }
-    let lastSnapshot = '';
-    r.persist = () => {
-      const snapshot = {skillId:skill.id,stage,stageId:skill.progressions[stage].id,blockIndex:r.bi,setIndex:r.si,phase:r.phase,log:r.log,rpe:r.rpe,startedAt:r.startedAt,actualReps:r.reps,quality:r.quality || {}};
-      const serialized = JSON.stringify(snapshot);
-      if (serialized !== lastSnapshot) {
-        lastSnapshot = serialized;
-        progressStore.saveRunner(snapshot,owner).catch(() => {});
-      }
-    };
-    const renderUpdate = onUpdate;
-    onUpdate = value => {r.persist();renderUpdate(value);};
-    Object.defineProperties(r, {
-      p: { get: () => r.blocks[r.bi] },
-      set: { get: () => r.si + 1 },
-      sets: { get: () => r.blocks[r.bi].sets },
-      logCur: { get: () => r.log[r.bi] },
-      isHold: { get: () => r.blocks[r.bi].type === 'hold' },
-    });
-    let iv = null;
-    const buzz = () => { try { navigator.vibrate?.(60); } catch { /* egal */ } };
-    const go = (phase, ms) => { r.phase = phase; r.total = ms; r.left = ms; r.workMs = 0; if (phase === 'work') r.reps = r.p.type === 'reps' ? r.p.reps : 0; buzz(); };
-    const finish = () => { r.phase = 'done'; r.left = 0; clearInterval(iv); iv = null; buzz(); };
-    function nextSetOrBlock() {
-      if (r.si + 1 < r.p.sets) { r.si++; go('prep', PREP_MS); return; }
-      if (r.bi + 1 < r.blocks.length) { r.bi++; r.si = 0; go('prep', PREP_MS); return; }
-      finish();
-    }
-    r.finishSet = () => {
-      if (r.phase !== 'work') return;
-      r.log[r.bi].push(r.isHold ? Math.min(r.p.seconds, Math.round(r.workMs / 1000)) : r.reps);
-      const lastOfAll = r.si + 1 >= r.p.sets && r.bi + 1 >= r.blocks.length;
-      if (lastOfAll) finish(); else go('rest', r.p.restSeconds * 1000);
-      onUpdate(r);
-    };
-    r.skip = () => { if (r.phase === 'prep') go('work', r.isHold ? r.p.seconds * 1000 : 0); else if (r.phase === 'rest') nextSetOrBlock(); onUpdate(r); };
-    r.skipBlock = () => {
-      if (r.phase === 'done') return;
-      if (r.bi + 1 >= r.blocks.length) finish(); else { r.bi++; r.si = 0; go('prep', PREP_MS); }
-      onUpdate(r);
-    };
-    r.addRest = () => { if (r.phase === 'rest') { r.left += 30000; r.total += 30000; onUpdate(r); } };
-    r.adj = d => { if (r.phase === 'work' && !r.isHold) { r.reps = Math.max(0, r.reps + d); onUpdate(r); } };
-    r.pause = () => { r.paused = !r.paused; onUpdate(r); };
-    r.setRpe = id => { r.rpe = r.rpe === id ? null : id; onUpdate(r); };
-    r.sig = () => [r.phase, r.bi, r.si, r.log.map(l => l.length).join('.'), r.paused, r.rpe].join();
-    r.metTarget = () => {
-      const b = r.blocks[0], l = r.log[0] || [];
-      return l.length >= b.sets && l.every(v => (b.type === 'hold' ? v >= b.seconds : v >= b.reps));
-    };
-    r.sessionData = () => ({
-      timestamp: new Date().toISOString(), skillId: skill.id, progressionStage: stage,
-      totalDurationSeconds: Math.round((Date.now() - r.startedAt) / 1000), rpe: r.rpe, metTarget: r.metTarget(),
-      exercises: r.blocks.map((b, i) => ({ name: b.name, role: b.role, type: b.type, setsCompleted: r.log[i] })),
-    });
-    r.start = () => { iv = setInterval(tick, 100); announce(true); onUpdate(r); };
-    r.stop = () => { clearInterval(iv); iv = null; announce(false); };
-    function tick() {
-      if (r.paused || r.phase === 'done') return;
-      if (r.phase === 'work') {
-        r.workMs += 100;
-        if (r.isHold) { r.left = Math.max(0, r.p.seconds * 1000 - r.workMs); if (r.left === 0) { r.finishSet(); return; } }
-      } else {
-        r.left -= 100;
-        if (r.left <= 0) { if (r.phase === 'prep') go('work', r.isHold ? r.p.seconds * 1000 : 0); else nextSetOrBlock(); }
-      }
-      onUpdate(r);
-    }
+    const r = createRunner({ skill, stage, blocks: buildWorkoutBlocks(skill,stage), resume,
+      onUpdate, onPersist: snapshot => progressStore.saveRunner(snapshot,owner) });
+    r.owner = owner;
+    const start = r.start, stop = r.stop;
+    let detach;
+    r.start = () => { detach?.(); detach = attachRunnerLifecycle(r); start(); announce(true); };
+    r.stop = (options) => { detach?.(); stop(options); announce(false); };
     return r;
   },
   // gemeinsame Runner-Buttons; true = behandelt
@@ -147,6 +90,7 @@ const Core = {
     else if ('pause' in ds) r.pause();
     else if ('add' in ds) r.addRest();
     else if ('adj' in ds) r.adj(+ds.adj);
+    else if ('end' in ds) r.endEarly();
     else if ('skipblock' in ds) r.skipBlock();
     else if ('rpe' in ds) r.setRpe(ds.rpe);
     else return false;
