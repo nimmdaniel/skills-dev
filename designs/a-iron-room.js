@@ -3,7 +3,7 @@ import Core from './core.js';
 import css from './a-iron-room.css?inline';
 
 const TICKER = ['Push', 'Pull', 'Core', 'Nichts geschenkt', 'Stufe für Stufe', 'Schwerkraft verliert', 'Halten', 'Wiederholen', 'Meistern'];
-const SEL = '[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock],[data-rpe],[data-save],[data-exit],[data-video]';
+const SEL = '[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock], [data-end],[data-rpe],[data-save],[data-exit],[data-video]';
 
 function mount(host) {
   const sr = host.attachShadow({ mode: 'open' });
@@ -89,7 +89,7 @@ function mount(host) {
     el.innerHTML = `<div class="hz t"></div><div class="hz b"></div>
       <div class="r-top"><div><div class="lab">${r.phase === 'done' ? 'Workout komplett' : `Übung ${r.bi + 1}/${r.blocks.length} · ${b.role} · Satz ${r.si + 1}/${r.sets}`}</div><div class="nm">${r.phase === 'done' ? r.skill.name : b.name}</div>
         ${r.phase !== 'done' ? '<button class="skipb" data-skipblock>Übung überspringen →</button>' : ''}</div>
-        <button class="lab" data-exit style="font:700 12px var(--mono);letter-spacing:.2em">✕ ABBRUCH</button></div>
+        <button class="lab" data-exit style="font:700 12px var(--mono);letter-spacing:.2em">SPÄTER FORTSETZEN</button></div>
       <div class="r-mid">
         <div class="r-phase">${phaseTxt}</div>
         <div class="r-num ${r.phase === 'work' && isHold ? 'out' : ''}">${num}</div>
@@ -97,6 +97,10 @@ function mount(host) {
         <div class="r-sub">${sub}</div>
         ${r.phase === 'done' ? `<div class="rpe">${Core.RPE.map(o => `<button class="${r.rpe === o.id ? 'on' : ''}" data-rpe="${o.id}">${o.label}</button>`).join('')}</div>` : `<div class="pips">${pips}</div>`}
       </div>
+      ${r.persistenceError ? `<p role="alert">Nicht gesichert: ${Core.esc(r.persistenceError)}</p>` : ''}
+      ${r.paused && r.phase !== 'done' ? '<p role="status">Pausiert · Weiter zum Fortsetzen</p>' : ''}
+      ${r.phase !== 'done' ? '<button data-end style="min-height:48px">Training beenden</button>' : ''}
+      ${Core.resultHTML(r)}
       ${r.phase === 'done' ? Core.qualityHTML(r) : ''}
       <div class="r-bot ${r.phase === 'rest' ? 'three' : ''}">
         ${r.phase === 'work' ? `<button class="r-btn pri" data-fin>${isHold ? 'Früher beenden' : 'Satz fertig'}</button>` : ''}
@@ -106,7 +110,7 @@ function mount(host) {
       </div>`;
   }
 
-  function closeRun() { if (runner) runner.stop(); runner = null; $('#run')?.remove(); }
+  function closeRun(saved = false) { if (runner) runner.stop({ persist: !saved }); runner = null; $('#run')?.remove(); }
   function route() { const id = Core.hash(); id && Core.byId(id) ? renderDetail(id) : renderList(); }
 
   let saving = false;
@@ -122,21 +126,23 @@ function mount(host) {
     else if ('run' in ds) { runner = Core.runner(Core.byId(id), Core.stage(id), renderRun); runner.start(); }
     else if ('master' in ds) { saving = true; await Core.master(Core.byId(id)); renderDetail(id); }
     else if ('down' in ds) { saving = true; if (await Core.downgrade(Core.byId(id))) renderDetail(id); }
-    else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(); renderDetail(id); }
+    else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(true); renderDetail(id); }
     else if ('exit' in ds) { closeRun(); }
     else if ('video' in ds) Core.toggleVideo(t, Core.byId(id).progressions[+ds.video].name);
     } catch (error) { window.alert(`Nicht gespeichert: ${error.message}`); } finally { saving = false; }
   };
   const onKey = e => { if (e.key === 'Escape' && runner) { e.preventDefault(); closeRun(); } };
-  const onQuality = e => Core.qualityInput(runner,e.target);
+  const onQuality = e => { if (e.target.dataset.result === undefined) Core.qualityInput(runner,e.target); };
+  const onResult = e => { if (e.target.dataset.result !== undefined) Core.qualityInput(runner,e.target); };
   sr.addEventListener('input',onQuality);
+  sr.addEventListener('change',onResult);
   const stopProgress = Core.subscribe(() => { if (!runner) route(); });
   sr.addEventListener('click', onClick);
   addEventListener('keydown', onKey);
   const stopNav = Core.nav(sr, route, () => !runner && !saving);
   route();
 
-  return () => { stopNav(); stopProgress(); sr.removeEventListener('input',onQuality); closeRun(); sr.removeEventListener('click', onClick); removeEventListener('keydown', onKey); };
+  return () => { stopNav(); stopProgress(); sr.removeEventListener('input',onQuality); sr.removeEventListener('change',onResult); closeRun(); sr.removeEventListener('click', onClick); removeEventListener('keydown', onKey); };
 }
 
 export default {

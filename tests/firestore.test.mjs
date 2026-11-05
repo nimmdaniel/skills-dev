@@ -18,7 +18,10 @@ test('Firestore: owner only, immutable events, idempotent retries, no catalog cl
     await assertFails(getDoc(doc(anonymous,path)));
     await assertFails(setDoc(doc(bob,path),event));
     await assertFails(setDoc(doc(alice,path),{...event,payload:{duration:20000}}));
-    await assertFails(deleteDoc(doc(alice,path)));
+    await assertFails(deleteDoc(doc(bob,path)));
+    await assertFails(deleteDoc(doc(anonymous,path)));
+    await assertSucceeds(deleteDoc(doc(alice,path)));
+    await assertSucceeds(setDoc(doc(alice,path),event));
     await assertFails(setDoc(doc(alice,'skillsUsers/alice/events/hold-2'),{...event,id:'hold-2',payload:{duration:-1}}));
     await assertFails(setDoc(doc(alice,'skillsCatalogs/calisthenics-v1'),{skills:[]}));
     if (!process.env.SKILLS_RULES_FILE) await assertFails(setDoc(doc(alice,'fitness/alice/sessions/skills-write'),event));

@@ -1,5 +1,12 @@
 {
   "appId": "at.vitalos.skills",
   "appName": "Skills",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
 }

@@ -2,7 +2,7 @@
 import Core from './core.js';
 import css from './b-gravity-map.css?inline';
 
-const SEL = '[data-node],[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock],[data-rpe],[data-save],[data-exit],[data-video]';
+const SEL = '[data-node],[data-open],[data-back],[data-run],[data-master],[data-down],[data-fin],[data-skip],[data-pause],[data-add],[data-adj],[data-skipblock], [data-end],[data-rpe],[data-save],[data-exit],[data-video]';
 
 /* Sternbild-Geometrie (deterministisch je Skill) */
 function rng(seed) {
@@ -137,7 +137,7 @@ function mount(host) {
     const unit = r.phase === 'done' ? r.log[0].join(' · ') + (r.blocks[0].type === 'hold' ? ' s' : ' Wdh') : r.phase === 'work' && !isHold ? 'Wiederholungen' : 'Sekunden';
     el.innerHTML = `
       <div class="r-top"><div><div class="a">${r.phase === 'done' ? 'Workout komplett' : `${r.skill.name} · Übung ${r.bi + 1}/${r.blocks.length} · ${b.role} · Umlauf ${r.si + 1}/${r.sets}`}</div><div class="b">${Core.esc(r.phase === 'done' ? r.skill.name : b.name)}</div>
-        ${r.phase !== 'done' ? '<button class="skipb" data-skipblock>Übung überspringen →</button>' : ''}</div><button class="x" data-exit>Abbrechen ✕</button></div>
+        ${r.phase !== 'done' ? '<button class="skipb" data-skipblock>Übung überspringen →</button>' : ''}</div><button class="x" data-exit>Später fortsetzen</button></div>
       <div class="r-mid">
         <div class="ring"><svg viewBox="0 0 340 340">
           ${Array.from({ length: 60 }, (_, k) => { const a = k / 60 * 6.283, l = k % 5 ? 4 : 9; return `<line class="tick" x1="${170 + (R + 14) * Math.cos(a)}" y1="${170 + (R + 14) * Math.sin(a)}" x2="${170 + (R + 14 + l) * Math.cos(a)}" y2="${170 + (R + 14 + l) * Math.sin(a)}"/>`; }).join('')}
@@ -149,6 +149,10 @@ function mount(host) {
         ${r.phase === 'done' ? `<div class="rpe">${Core.RPE.map(o => `<button class="${r.rpe === o.id ? 'on' : ''}" data-rpe="${o.id}">${o.label}</button>`).join('')}</div>` : `<div class="moons">${moons}</div>`}
         <div class="r-sub">${r.phase === 'done' ? 'Bewerte das Workout und speichere es.' : r.phase === 'rest' ? (r.si + 1 < r.p.sets ? 'Schwerelos. Gleich folgt Umlauf ' + (r.si + 2) + '.' : 'Schwerelos. Gleich: ' + (r.blocks[r.bi + 1]?.name || 'Ende')) : Core.target(b)}</div>
       </div>
+      ${r.persistenceError ? `<p role="alert">Nicht gesichert: ${Core.esc(r.persistenceError)}</p>` : ''}
+      ${r.paused && r.phase !== 'done' ? '<p role="status">Pausiert · Weiter zum Fortsetzen</p>' : ''}
+      ${r.phase !== 'done' ? '<button data-end style="min-height:48px">Training beenden</button>' : ''}
+      ${Core.resultHTML(r)}
       ${r.phase === 'done' ? Core.qualityHTML(r) : ''}
       <div class="r-bot">
         ${r.phase === 'work' ? `<button class="rb pri" data-fin>${isHold ? 'Früher beenden' : 'Satz fertig'}</button>` : ''}
@@ -158,7 +162,7 @@ function mount(host) {
       </div>`;
   }
 
-  function closeRun() { if (runner) runner.stop(); runner = null; $('#run')?.remove(); }
+  function closeRun(saved = false) { if (runner) runner.stop({ persist: !saved }); runner = null; $('#run')?.remove(); }
   function route() { const id = Core.hash(); id && Core.byId(id) ? renderDetail(id) : renderList(); }
 
   let saving = false;
@@ -175,7 +179,7 @@ function mount(host) {
     else if ('run' in ds) { runner = Core.runner(Core.byId(id), Core.stage(id), renderRun); runner.start(); }
     else if ('master' in ds) { saving = true; await Core.master(Core.byId(id)); renderDetail(id); }
     else if ('down' in ds) { saving = true; if (await Core.downgrade(Core.byId(id))) renderDetail(id); }
-    else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(); renderDetail(id); }
+    else if ('save' in ds) { saving = true; await Core.saveWorkout(runner); closeRun(true); renderDetail(id); }
     else if ('exit' in ds) closeRun();
     else if ('video' in ds) Core.toggleVideo(t, Core.byId(id).progressions[+ds.video].name);
     } catch (error) { window.alert(`Nicht gespeichert: ${error.message}`); } finally { saving = false; }
@@ -186,8 +190,10 @@ function mount(host) {
     const b = c.getBoundingClientRect(); c.style.setProperty('--mx', (e.clientX - b.left) + 'px'); c.style.setProperty('--my', (e.clientY - b.top) + 'px');
   };
   const onKey = e => { if (e.key === 'Escape' && runner) { e.preventDefault(); closeRun(); } };
-  const onQuality = e => Core.qualityInput(runner,e.target);
+  const onQuality = e => { if (e.target.dataset.result === undefined) Core.qualityInput(runner,e.target); };
+  const onResult = e => { if (e.target.dataset.result !== undefined) Core.qualityInput(runner,e.target); };
   sr.addEventListener('input',onQuality);
+  sr.addEventListener('change',onResult);
   const stopProgress = Core.subscribe(() => { if (!runner) route(); });
   sr.addEventListener('click', onClick); sr.addEventListener('pointermove', onPointer);
   addEventListener('keydown', onKey);
@@ -195,7 +201,7 @@ function mount(host) {
   route();
 
   return () => {
-    stopNav(); stopProgress(); sr.removeEventListener('input',onQuality); closeRun(); cancelAnimationFrame(raf);
+    stopNav(); stopProgress(); sr.removeEventListener('input',onQuality); sr.removeEventListener('change',onResult); closeRun(); cancelAnimationFrame(raf);
     removeEventListener('resize', size); removeEventListener('pointermove', onMove); removeEventListener('scroll', onScroll); removeEventListener('keydown', onKey);
   };
 }

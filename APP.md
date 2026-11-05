@@ -127,3 +127,29 @@ Neues gemeinsames Modul `navigation.js` für die Original-Karte und alle drei De
 - **Original-Karte:** zusätzlich Pager (`‹ 3/14 ›`) neben „Skills“ und kurze Slide-Animation beim Wechsel.
 - **Schutz:** Navigation ist gesperrt, solange ein Workout läuft oder gespeichert wird. Wischen ignoriert Eingabefelder, Slider, Video, Diagramme (`data-no-swipe`), horizontal scrollende Bereiche, vorwiegend vertikale oder langsame Gesten, Starts am Bildschirmrand (System-Zurück-Geste) und gezoomte Seiten. Tasten mit Strg/Alt/Meta/Shift und Tasten in Eingabefeldern oder im Design-Menü werden ignoriert.
 - Tests: `tests/navigation.test.mjs` (reine Logik), `test:designs` (Tasten/Wischen/Runner-Sperre je Design). `test:designs` und das Gerüst von `test-exercise-videos.mjs` wurden an `workoutCompletion.js` bzw. die neuen Props angepasst.
+
+
+## 2026-11-05 — Gemeinsamer Trainingskern und Android-Vorbereitung
+
+- Original und alle drei Designs verwenden denselben Runner in `runner/engine.js`.
+  Zeitmessung folgt Uhrzeitankern; lange unbeobachtete Lücken pausieren den Ablauf.
+- Haltezeiten können vorzeitig beendet werden. Letzte Satzwerte sind in der Pause
+  korrigierbar; Teiltraining und späteres Fortsetzen sind getrennte Aktionen.
+- Versionierte Entwürfe behalten Plan, Satzdaten, gemessene Zeit und Trainings-ID.
+  Wiederaufnahme erfolgt pausiert; ältere Pausenentwürfe wiederholen keinen Satz.
+- Eine feste Trainings-ID verhindert doppelte Abschlüsse bei Wiederholungsversuchen.
+  Original-Zusammenfassung und Archiv zeigen Haltesekunden und Wiederholungen getrennt.
+- Android: portable JDK-Konfiguration, begrenzte Build-Parallelität, explizites HTTPS,
+  Release-Version und Upload-Signierung über Umgebungsvariablen. Release-Gates und
+  noch offene native Anmeldung/Kontolöschung: `docs/ANDROID-RELEASE.md`.
+- Thenics ist die vom Nutzer benannte funktionale Referenz. Die bisherige
+  Primär-/Sekundär-/Conditioning-Reihenfolge bleibt erhalten. Exakte Thenics-
+  Satzwerte, Pausen und interne Runner-Abläufe sind damit nicht verifiziert.
+- Kein Play-Store-Release und keine reale Geräteabnahme aus diesen Änderungen ableiten.
+- Runner-Integrationstest `scripts/test-runner-integration.mjs` (gemeinsamer Kern in allen
+  vier Oberflächen, tatsächliche Haltezeit, Doppeltippen, Korrektur, Unterbrechung, Wiederaufnahme,
+  Speicherfehler). Service-Worker-Test: Request-Mock um `headers` ergänzt.
+- „Skills-Daten löschen": entfernt Cloud-Events und lokale Kopien des angemeldeten Kontos und meldet
+  ab; Gast-Daten und der gemeinsame Firebase-Nutzer bleiben. Firestore-Rules erlauben dafür
+  Owner-Delete auf `skillsUsers/{uid}/events` (Deploy über VitalOS nötig, Emulator-Test grün).
+- Debug-APK `at.vitalos.skills` gebaut (JDK 21); keine Geräteabnahme, native Anmeldung offen.

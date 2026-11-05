@@ -9,7 +9,10 @@ import { progressStore } from './data/store.js';
 import { useProgress } from './data/useProgress.js';
 import { toHostWorkout } from './data/workoutCompletion.js';
 import { attachNav, neighborId, orderedIds } from './navigation.js';
-export { SKILLS };
+import { createRunner } from './runner/engine.js';
+import { buildWorkoutBlocks } from './runner/blocks.js';
+import { attachRunnerLifecycle } from './runner/lifecycle.js';
+export { SKILLS, buildWorkoutBlocks };
 
 const SKILL_ORDER = orderedIds(SKILLS);
 
@@ -42,7 +45,6 @@ function setSkillIdInHash(skillId) {
 }
 
 function loadActiveRunner() { return progressStore.runner(); }
-function saveActiveRunner(state) { progressStore.saveRunner(state).catch(() => {}); }
 function clearActiveRunner() { progressStore.saveRunner(null).catch(() => {}); }
 
 function SkillRow({ skill, progress, onOpen, isLast }) {
@@ -203,34 +205,6 @@ function formatTarget(p) {
   return p.type === 'hold' ? `${p.sets}× ${p.seconds}s halten` : `${p.sets}× ${p.reps} Wdh`;
 }
 
-// ── Geführter Workout-Runner (State-Machine, 3-Phasen-Modell) ───────────────
-// prep (kurzer Countdown) → work (Countdown bei "hold", manuelle Bestätigung
-// bei "reps") → rest (Auto-Countdown, +30s/SKIP, Screen-Tönung) → nächster
-// Satz, bis der Block durch ist → nächster Block → done. Reihenfolge und
-// Pausenzeiten sind eigene, an ZNS-/Volumen-/Conditioning-Prinzipien
-// angelehnte Defaults — nicht 1:1 aus der echten App verifiziert:
-//   1. Primär   = aktuelle Progressionsstufe, hohe Intensität, lange Pause (150s)
-//   2. Sekundär = eine Stufe zurück (mehr Volumen), mittlere Pause (75s) — entfällt bei Stufe 0
-//   3. Conditioning = Core/Gelenk-Übung passend zur Skill-Kategorie, kurze Pause (45s)
-const PREP_SECONDS = 3;
-
-const CONDITIONING_BY_CATEGORY = {
-  push: { name: 'Hollow Body Hold', type: 'hold', sets: 3, seconds: 20 },
-  pull: { name: 'Scapula Pulls', type: 'reps', sets: 3, reps: 10 },
-  core: { name: 'Plank', type: 'hold', sets: 3, seconds: 30 },
-  legs: { name: 'Deep Squats', type: 'reps', sets: 2, reps: 8 },
-  balance: { name: 'Hollow Body Hold', type: 'hold', sets: 2, seconds: 20 },
-};
-
-export function buildWorkoutBlocks(skill, stage) {
-  const blocks = [{ ...skill.progressions[stage], role: 'Primär' }];
-  if (stage > 0) {
-    blocks.push({ ...skill.progressions[stage - 1], role: 'Sekundär', restSeconds: 75 });
-  }
-  blocks.push({ ...CONDITIONING_BY_CATEGORY[skill.category], role: 'Conditioning', restSeconds: 45 });
-  return blocks;
-}
-
 const RPE_OPTIONS = [
   { id: 'easy', label: 'Leicht' },
   { id: 'optimal', label: 'Optimal' },
@@ -238,151 +212,40 @@ const RPE_OPTIONS = [
 ];
 
 function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
-  const [blocks] = useState(() => buildWorkoutBlocks(skill, stage));
-  const initialBlockIndex = resumeState?.blockIndex ?? 0;
-  const [blockIndex, setBlockIndex] = useState(initialBlockIndex);
-  const [phase, setPhase] = useState(resumeState?.phase === 'done' ? 'done' : 'prep');
-  const [setIndex, setSetIndex] = useState(resumeState?.setIndex ?? 0);
-  const [remainingMs, setRemainingMs] = useState(PREP_SECONDS * 1000);
-  const [workElapsedMs, setWorkElapsedMs] = useState(0);
-  const [startedAt] = useState(() => resumeState?.startedAt ?? Date.now());
-  const [log, setLog] = useState(() => resumeState?.log ?? blocks.map(() => []));
-  const [actualReps, setActualReps] = useState(blocks[initialBlockIndex].type === 'reps' ? blocks[initialBlockIndex].reps : 0);
-  const [rpe, setRpe] = useState(resumeState?.rpe ?? null);
-
-  const block = blocks[blockIndex];
-  const nextBlock = blocks[blockIndex + 1];
-  const isHold = block.type === 'hold';
-
-  // Persistiert nur strukturelle Fortschritts-Punkte (kein Countdown-Ticken)
-  // — keine Countdown-Millisekunden.
-  useEffect(() => {
-    saveActiveRunner({ skillId: skill.id, stage, stageId:skill.progressions[stage].id, phase, blockIndex, setIndex, log, rpe, startedAt });
-  }, [blockIndex, setIndex, log, rpe, phase]);
-
-  function handleExit() {
-    clearActiveRunner();
-    onExit();
-  }
-
-  function skipBlock() {
-    const nextBlockIndex = blockIndex + 1;
-    if (nextBlockIndex >= blocks.length) {
-      setPhase('done');
-      return;
-    }
-    setBlockIndex(nextBlockIndex);
-    setSetIndex(0);
-    setPhase('prep');
-    setRemainingMs(PREP_SECONDS * 1000);
-  }
-
-  useEffect(() => {
-    if (phase === 'done') return undefined;
-    if (phase === 'work' && !isHold) {
-      const interval = window.setInterval(() => setWorkElapsedMs(ms => ms + 100), 100);
-      return () => window.clearInterval(interval);
-    }
-    const interval = window.setInterval(() => {
-      setRemainingMs(ms => {
-        if (ms > 100) return ms - 100;
-        advancePhase();
-        return 0;
-      });
-    }, 100);
-    return () => window.clearInterval(interval);
-  }, [phase, setIndex, blockIndex]);
-
-  function logAchieved(value) {
-    setLog(current => {
-      const next = current.map(arr => arr.slice());
-      next[blockIndex] = [...next[blockIndex], value];
-      return next;
+  const [, refresh] = useState(0);
+  const [runner] = useState(() => {
+    const owner = progressStore.getSnapshot().owner;
+    const engine = createRunner({ skill, stage, blocks: buildWorkoutBlocks(skill, stage), resume: resumeState,
+      onUpdate: () => refresh(n => n + 1),
+      onPersist: snapshot => progressStore.saveRunner(snapshot, owner),
     });
-  }
-
-  function correctRestReps(value) {
-    if (phase !== 'rest' || isHold) return;
-    const reps = Math.max(0, Number(value) || 0);
-    setLog(current => {
-      const next = current.map(arr => arr.slice());
-      if (next[blockIndex]?.[setIndex] === undefined) return current;
-      next[blockIndex][setIndex] = reps;
-      return next;
-    });
-  }
-
-  function advancePhase() {
-    if (phase === 'prep') {
-      setPhase('work');
-      setWorkElapsedMs(0);
-      setRemainingMs(isHold ? block.seconds * 1000 : 0);
-      if (!isHold) setActualReps(block.reps);
-      return;
-    }
-    if (phase === 'work') {
-      if (isHold) logAchieved(block.seconds);
-      goToRest();
-      return;
-    }
-    if (phase === 'rest') {
-      const nextSet = setIndex + 1;
-      if (nextSet >= block.sets) {
-        const nextBlockIndex = blockIndex + 1;
-        if (nextBlockIndex >= blocks.length) {
-          setPhase('done');
-          return;
-        }
-        setBlockIndex(nextBlockIndex);
-        setSetIndex(0);
-        setPhase('prep');
-        setRemainingMs(PREP_SECONDS * 1000);
-        return;
-      }
-      setSetIndex(nextSet);
-      setPhase('prep');
-      setRemainingMs(PREP_SECONDS * 1000);
-    }
-  }
-
-  function goToRest() {
-    setPhase('rest');
-    setRemainingMs(block.restSeconds * 1000);
-  }
-
-  function completeRepsSet() {
-    if (phase !== 'work' || isHold) return;
-    logAchieved(actualReps);
-    goToRest();
-  }
-
-  function addRestTime() {
-    if (phase === 'rest') setRemainingMs(ms => ms + 30000);
-  }
-
-  function skipRest() {
-    if (phase === 'rest') advancePhase();
-  }
-
-  // Only the primary exercise contributes to the target check. Technique and
-  // repeatability are evaluated separately; saving never advances a stage.
-  const primaryBlock = blocks[0];
-  const primaryLog = log[0] || [];
-  const metTarget = primaryLog.length >= primaryBlock.sets && primaryLog.every(v =>
-    primaryBlock.type === 'hold' ? v >= primaryBlock.seconds : v >= primaryBlock.reps
-  );
-
+    engine.owner = owner;
+    return engine;
+  });
+  useEffect(() => {
+    runner.start();
+    const detach = attachRunnerLifecycle(runner);
+    window.dispatchEvent(new CustomEvent('skills-runner', { detail: true }));
+    return () => {
+      detach(); runner.stop({ persist: false });
+      window.dispatchEvent(new CustomEvent('skills-runner', { detail: false }));
+    };
+  }, [runner]);
+  const { blocks, phase, log, rpe, startedAt, reps: actualReps,
+    bi: blockIndex, si: setIndex, left: remainingMs, workMs: workElapsedMs } = runner;
+  const block = runner.p, nextBlock = blocks[blockIndex + 1], isHold = runner.isHold;
+  const setActualReps = update => runner.adj(update(actualReps) - actualReps);
+  const completeRepsSet = () => runner.finishSet();
+  const addRestTime = () => runner.addRest();
+  const skipRest = () => runner.skip();
+  const skipBlock = () => runner.skipBlock();
+  const setRpe = value => runner.setRpe(value);
+  const correctRestReps = value => runner.correctSet(blockIndex, setIndex, Number(value));
+  const metTarget = runner.metTarget();
+  function handleExit() { runner.suspend('later'); onExit(runner.snapshot()); }
   function saveWorkout() {
-    const totalDurationSeconds = Math.round((Date.now() - startedAt) / 1000);
-    onFinish({
-      timestamp: new Date().toISOString(),
-      skillId: skill.id,
-      progressionStage: stage,
-      totalDurationSeconds,
-      rpe,
-      metTarget,
-      exercises: blocks.map((b, i) => ({ name: b.name, role: b.role, type: b.type, setsCompleted: log[i] })),
-    });
+    if (runner.owner !== progressStore.getSnapshot().owner) return;
+    return onFinish(runner.sessionData());
   }
 
   const phaseColor = phase === 'rest' ? '#38bdf8' : 'var(--accent)';
@@ -400,13 +263,14 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
       className="rounded-2xl px-5 py-8 mb-4 text-center transition-colors duration-500"
       style={{ background: phase === 'rest' ? 'rgba(56,189,248,0.1)' : 'var(--accent-glow, rgba(0,0,0,0.05))', border: `1px solid ${phase === 'rest' ? 'rgba(56,189,248,0.35)' : 'var(--line)'}` }}
     >
+      {runner.persistenceError && <p role="alert">Nicht gesichert: {runner.persistenceError}</p>}
       {phase !== 'done' && (
         <>
           <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--dim)' }}>
             Übung {blockIndex + 1}/{blocks.length} · {block.role}
           </div>
           <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: phaseColor }}>
-            {phaseLabel} · Satz {setIndex + 1}/{block.sets}
+            {runner.paused ? 'Pausiert · Weiter zum Fortsetzen' : phaseLabel} · Satz {setIndex + 1}/{block.sets}
           </div>
           <div className="text-lg font-black text-fit-ink mb-3">{block.name}</div>
           {phase !== 'rest' && <ExerciseVideo key={block.name} name={block.name} autoPlay />}
@@ -443,7 +307,7 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
           )}
 
           {(phase === 'work' && isHold) && (
-            <div className="text-5xl font-black tabular-nums text-fit-ink">{Math.ceil(remainingMs / 1000)}s</div>
+            <div><div className="text-5xl font-black tabular-nums text-fit-ink">{Math.ceil(remainingMs / 1000)}s</div><button className="min-h-12 px-5 rounded-xl" onClick={() => runner.finishSet()}>Halten beenden</button></div>
           )}
 
           {phase === 'prep' && (
@@ -453,19 +317,19 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
           {phase === 'rest' && (
             <>
               <div className="text-5xl font-black tabular-nums text-fit-ink mb-2">{Math.ceil(remainingMs / 1000)}s</div>
-              {!isHold && log[blockIndex]?.[setIndex] !== undefined && (
+              {log[blockIndex]?.[setIndex] !== undefined && (
                 <label className="block text-left mb-4">
                   <span className="block text-xs font-bold text-fit-ink mb-2">
-                    Letzter Satz: {log[blockIndex][setIndex]} Wdh
+                    Letzter Satz: {log[blockIndex][setIndex]} {isHold ? 'Sek.' : 'Wdh'}
                   </span>
                   <input
                     type="range"
                     min="0"
-                    max={Math.max(20, block.reps * 2, log[blockIndex][setIndex])}
+                    max={Math.max(20, (block.reps || block.seconds) * 2, log[blockIndex][setIndex])}
                     value={log[blockIndex][setIndex]}
                     onChange={event => correctRestReps(event.target.value)}
                     className="skills-reps-slider w-full"
-                    aria-label="Wiederholungen des letzten Satzes korrigieren"
+                    aria-label="Ergebnis des letzten Satzes korrigieren"
                   />
                 </label>
               )}
@@ -498,6 +362,8 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
           blocks={blocks}
           log={log}
           startedAt={startedAt}
+          durationSeconds={runner.sessionData().totalDurationSeconds}
+          partial={runner.sessionData().status === 'partial'}
           rpe={rpe}
           onSetRpe={setRpe}
           onSave={saveWorkout}
@@ -508,9 +374,11 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
       {phase !== 'done' && (
         <div className="flex items-center justify-center gap-4 mt-4">
           <button onClick={handleExit} className="text-[11px] font-bold" style={{ color: 'var(--dim)' }}>
-            Abbrechen
+            Später fortsetzen
           </button>
-          {blockIndex > 0 && (
+          <button className="min-h-12 px-3" onClick={() => runner.pause()}>{runner.paused ? 'Weiter' : 'Pause'}</button>
+          <button className="min-h-12 px-3" onClick={() => runner.endEarly()}>Training beenden</button>
+          {blockIndex >= 0 && (
             <button onClick={skipBlock} className="text-[11px] font-bold" style={{ color: 'var(--dim)' }}>
               {block.role} überspringen →
             </button>
@@ -521,18 +389,17 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
   );
 }
 
-function SessionSummary({ blocks, log, startedAt, rpe, onSetRpe, onSave, metTarget }) {
-  const totalSeconds = Math.round((Date.now() - startedAt) / 1000);
-  const totalVolume = blocks.reduce((sum, _b, i) => sum + log[i].reduce((s, v) => s + v, 0), 0);
-  const volumeUnit = blocks.every(b => b.type === 'hold') ? 'Sek.' : 'Wdh/Sek.';
+function SessionSummary({ blocks, log, startedAt, durationSeconds, partial, rpe, onSetRpe, onSave, metTarget }) {
+  const totalSeconds = durationSeconds ?? Math.round((Date.now() - startedAt) / 1000);
+  const sumType = type => blocks.reduce((sum, b, i) => sum + (b.type === type ? log[i].reduce((s, v) => s + v, 0) : 0), 0);
 
   return (
     <div className="text-left">
       <div className="text-center mb-4">
         <Trophy size={28} style={{ color: 'var(--accent)' }} className="mx-auto mb-2" />
-        <div className="text-lg font-black text-fit-ink">Workout Complete!</div>
+        <div className="text-lg font-black text-fit-ink">{partial ? 'Teiltraining abgeschlossen' : 'Training abgeschlossen'}</div>
         <div className="text-[11px] font-bold mt-1" style={{ color: 'var(--dim)' }}>
-          Gesamtzeit {formatSeconds(totalSeconds)} · Volumen {totalVolume} {volumeUnit}
+          Gesamtzeit {formatSeconds(totalSeconds)} · {sumType('hold')} Sek. Haltearbeit · {sumType('reps')} Wiederholungen
         </div>
         {metTarget && (
           <div className="text-[11px] font-black mt-2 px-3 py-1.5 rounded-lg inline-block" style={{ background: 'var(--accent-glow, rgba(200,255,0,0.12))', color: 'var(--accent)' }}>
@@ -602,7 +469,7 @@ function WorkoutArchive({ sessions }) {
       <div className="flex flex-col gap-1.5">
         {sorted.map((s, i) => {
           const isOpen = openId === i;
-          const totalVolume = (s.exercises || []).reduce((sum, ex) => sum + (ex.setsCompleted || []).reduce((a, b) => a + b, 0), 0);
+          const volume = type => (s.exercises || []).filter(ex => ex.type === type).reduce((sum, ex) => sum + (ex.setsCompleted || []).reduce((a, b) => a + b, 0), 0);
           return (
             <div key={s.timestamp || i} className="rounded-lg overflow-hidden" style={{ background: 'var(--bg2)' }}>
               <button
@@ -612,7 +479,7 @@ function WorkoutArchive({ sessions }) {
                 <div>
                   <div className="text-sm font-bold text-fit-ink">{formatMasteredAt(s.timestamp || s.at)}</div>
                   <div className="text-[10px] font-bold" style={{ color: 'var(--dim)' }}>
-                    {formatSeconds(s.totalDurationSeconds || 0)} · {totalVolume} Vol. {s.rpe ? `· ${RPE_OPTIONS.find(o => o.id === s.rpe)?.label ?? s.rpe}` : ''}
+                    {formatSeconds(s.totalDurationSeconds || 0)} · {volume('hold')} s · {volume('reps')} Wdh {s.rpe ? `· ${RPE_OPTIONS.find(o => o.id === s.rpe)?.label ?? s.rpe}` : ''}
                   </div>
                 </div>
                 <ChevronRight size={14} style={{ color: 'var(--dim)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
@@ -843,11 +710,10 @@ function SkillDetailScreen({ skill, stage, mastered, history, holds, sessions, p
           skill={skill}
           stage={stage}
           resumeState={resumeState}
-          onExit={() => { setResumeState(null); setRunnerActive(false); }}
+          onExit={snapshot => { setResumeState(snapshot); setRunnerActive(false); }}
           onFinish={async (sessionData) => {
             const saved = await onLogWorkout(stage, sessionData);
             if (!saved) return;
-            clearActiveRunner();
             setResumeState(null);
             setRunnerActive(false);
           }}
@@ -1036,13 +902,14 @@ export default function SkillsCard({ onWorkoutComplete } = {}) {
     const skill = SKILLS.find(s => s.id === skillId);
     const stageId = skill.progressions[stage].id;
     return action(async () => {
-      const day = new Date();
+      const day = new Date(sessionData.timestamp);
       const trainingDay = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
       await progressStore.record('session',skillId,stageId,{
         ...sessionData, trainingDay, techniqueConfirmed, bothSidesConfirmed, assistance,
         addedLoadKg:Number(addedLoadKg) || 0,
         exercises:sessionData.exercises.map((ex,i) => ({...ex,...(i === 0 ? {stageId} : {})})),
       });
+      await progressStore.saveRunner(null, owner, sessionData.sessionId);
       setTechniqueConfirmed(false); setBothSidesConfirmed(false);
       // Optional host integration runs after Skills has saved its own record.
       try { onWorkoutComplete?.(toHostWorkout(skill, stage, sessionData)); }

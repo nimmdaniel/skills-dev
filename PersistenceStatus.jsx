@@ -19,6 +19,9 @@ export default function PersistenceStatus() {
         <span>{user.displayName || user.email}</span>
         <button type="button" onClick={() => act(() => progressStore.logout())}>Abmelden</button>
         <button type="button" onClick={() => act(() => progressStore.importGuest())}>Lokale Daten in dieses Konto übernehmen</button>
+        <button type="button" onClick={() => {
+          if (window.confirm('Alle Skills-Trainingsdaten dieses Kontos (Cloud und dieses Gerät) endgültig löschen und abmelden? Das kann nicht rückgängig gemacht werden. Dein Google-Konto und andere VitalOS-Bereiche bleiben bestehen; Gast-Daten auf diesem Gerät bleiben erhalten.')) act(() => progressStore.deleteSkillsData());
+        }}>Skills-Daten löschen</button>
       </> : <button type="button" onClick={() => act(() => progressStore.login())}>Mit Google anmelden · Auto-Sync</button>}
       <button type="button" onClick={() => act(() => progressStore.retry())}>Speicher / Sync erneut versuchen</button>
     </fieldset>

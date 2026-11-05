@@ -40,11 +40,16 @@ for (const file of ['a-iron-room.js','b-gravity-map.js','c-riso-climb.js']) {
   w.HTMLCanvasElement.prototype.getContext=()=>({clearRect(){},beginPath(){},arc(){},fill(){}});
   const bridge=await compile(root+'/data/designProgress.js',{'./catalog.js':{SKILLS,assessStage},'./store.js':{progressStore:store},'./workoutCompletion.js':{emitHostWorkoutComplete(){},toHostWorkout:(skill,stage,data)=>data}},globals);
   const nav=await compile(root+'/navigation.js',{},globals);
+  const blocks=await compile(root+'/runner/blocks.js',{},globals);
+  const engine=await compile(root+'/runner/engine.js',{},globals);
+  const lifecycle=await compile(root+'/runner/lifecycle.js',{},globals);
+  const runnerDeps = {'./runner/engine.js':engine,'./runner/blocks.js':blocks,'./runner/lifecycle.js':lifecycle};
   const card=await compile(root+'/SkillsCard.jsx',{
-    react:{useState() {},useEffect() {},useRef() {}},'./navigation.js':nav,'./ExerciseVideo.jsx':{},'./PersistenceStatus.jsx':{},'lucide-react':{},recharts:{},
+    ...runnerDeps,react:{useState() {},useEffect() {},useRef() {}},'./navigation.js':nav,'./ExerciseVideo.jsx':{},'./PersistenceStatus.jsx':{},'lucide-react':{},recharts:{},
     './data/catalog.js':{SKILLS,assessStage},'./data/store.js':{progressStore:store},'./data/useProgress.js':{},'./data/workoutCompletion.js':{toHostWorkout:(skill,stage,data)=>data},
   },globals);
   const core=await compile(root+'/designs/core.js',{
+    '../data/catalog.js':{SKILLS},'../runner/engine.js':engine,'../runner/blocks.js':blocks,'../runner/lifecycle.js':lifecycle,
     '../SkillsCard.jsx':card,'../navigation.js':nav,'../ExerciseVideo.jsx':{videoForExercise:()=>null},
     '../data/designProgress.js':bridge,'../data/store.js':{progressStore:store},
   },globals);

@@ -1,4 +1,6 @@
 import { SKILLS } from '../data/catalog.js';
+import { createRunner } from '../runner/engine.js';
+import { buildWorkoutBlocks } from '../runner/blocks.js';
 import * as navigation from '../navigation.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -24,8 +26,8 @@ function nodes(tree, match) {
   return [...(match(tree) ? [tree] : []), ...(tree.children || []).flat(Infinity).flatMap(child => nodes(child, match))];
 }
 const player = await compile('../ExerciseVideo.jsx', '', { './exerciseVideos.json': { __esModule: true, default: catalog } });
-const app = await compile('../SkillsCard.jsx', '\nexport { CONDITIONING_BY_CATEGORY, WorkoutRunner, SkillDetailScreen };', { './ExerciseVideo.jsx': { __esModule: true, default: player.default }, './data/catalog.js': { SKILLS, assessStage: () => ({qualified:0,days:0,ready:false}) }, './data/store.js': { progressStore: {runner: () => null} }, './navigation.js': navigation });
-const names = new Set([...app.SKILLS.flatMap(skill => skill.progressions.map(p => p.name)), ...Object.values(app.CONDITIONING_BY_CATEGORY).map(p => p.name)]);
+const app = await compile('../SkillsCard.jsx', '\nexport { WorkoutRunner, SkillDetailScreen };', { './runner/engine.js':{createRunner}, './runner/blocks.js':{buildWorkoutBlocks}, './runner/lifecycle.js':{}, './ExerciseVideo.jsx': { __esModule: true, default: player.default }, './data/catalog.js': { SKILLS, assessStage: () => ({qualified:0,days:0,ready:false}) }, './data/store.js': { progressStore: {runner: () => null, getSnapshot: () => ({owner:'test'})} }, './navigation.js': navigation });
+const names = new Set([...app.SKILLS.flatMap(skill => skill.progressions.map(p => p.name)), ...app.SKILLS.flatMap(skill => buildWorkoutBlocks(skill,0).map(p => p.name))]);
 assert.equal(names.size, Object.keys(catalog).length, 'catalog must cover every progression and conditioning exercise');
 for (const name of names) assert(player.videoForExercise(name), name);
 assert.equal(player.videoForExercise('unknown saved exercise'), null);
@@ -52,7 +54,7 @@ assert.match(nodes(tree, node => node.type === 'iframe')[0].props.src, /^https:\
 const props = { skill: app.SKILLS[0], stage: 0, onExit() {}, onFinish() {} };
 states = []; cursor = 0; tree = app.WorkoutRunner(props);
 assert.equal(nodes(tree, node => node.type === player.default)[0].props.name, props.skill.progressions[0].name);
-states[2] = 'rest'; cursor = 0; tree = app.WorkoutRunner(props);
+states[1].phase = 'rest'; cursor = 0; tree = app.WorkoutRunner(props);
 assert.equal(nodes(tree, node => node.type === player.default).length, 0, 'rest unmounts and stops media');
 let changes = 0;
 const detailProps = { ...props, position: { index: 0, total: 14 }, onStep() {}, onRunnerActive() {}, history: [], holds: [], sessions: [], onMaster() { changes++; }, onDowngrade() { changes++; } };

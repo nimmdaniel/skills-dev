@@ -26,11 +26,12 @@ export const designProgress = {
     await progressStore.record('stage',skill.id,skill.progressions[stage].id,{mastered:false,reset:true,manual:true});
     return true;
   },
-  async saveWorkout(skill,stage,data,quality = {}) {
+  async saveWorkout(skill,stage,data,quality = {}, expectedOwner = progressStore.getSnapshot().owner) {
+    if (expectedOwner !== progressStore.getSnapshot().owner) throw new Error('Konto gewechselt; Training gehört zum ursprünglichen Konto');
     const stageId = skill.progressions[stage].id;
-    const date = new Date();
-    const trainingDay = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-    await progressStore.record('session',skill.id,stageId,{
+    const date = new Date(data.timestamp || Date.now());
+    const trainingDay = data.trainingDay || `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const event = await progressStore.record('session',skill.id,stageId,{
       ...data,trainingDay,
       techniqueConfirmed:quality.techniqueConfirmed === true,
       bothSidesConfirmed:quality.bothSidesConfirmed === true,
@@ -38,8 +39,10 @@ export const designProgress = {
       exercises:data.exercises.map((exercise,index) => ({...exercise,...(index === 0 ? {stageId} : {})})),
     });
     // Never clear an unfinished runner before the event is durably stored.
-    await progressStore.saveRunner(null);
-    emitHostWorkoutComplete(toHostWorkout(skill, stage, data));
-    return data;
+    if (expectedOwner !== progressStore.getSnapshot().owner) throw new Error('Skills gespeichert; Konto vor Abschluss gewechselt');
+    await progressStore.saveRunner(null,expectedOwner,data.sessionId);
+    const saved = event?.payload || data;
+    emitHostWorkoutComplete(toHostWorkout(skill, stage, saved));
+    return saved;
   },
 };
