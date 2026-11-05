@@ -1,63 +1,74 @@
-# Standalone-Prod Skills: Push auf master deployt live (nur CI). Gleiche Schritte wie das frühere
-# Meta-Repo-Workflow deploy-skills.yml; das Meta-Repo liefert nur die Nachbar-Repos (Cross-Repo-Aliase),
-# skills-app wird auf den ausgelösten Commit gesetzt.
+# Standalone-Prod Skills: Push auf master deployt live (nur CI) — aus dem MASTER-Checkout des eigenen Repos,
+# OHNE das Meta-Repo vitalos (gleiches Muster wie fitness-dev/deploy-master.yml). Skills hat keine Nachbar-Repos
+# und keine Submodule; Install mit eigenem Lockfile (standalone, ohne Workspace).
+# Auslöser: push auf master und workflow_dispatch (automerge.yml) -> baut und deployt live (nur master).
+# Push auf `ci-test/**` -> reiner Build-Test, KEIN Deploy.
+# Release-Branch `vitalos` und die Submodul-Pfade im Meta-Repo bleiben unberührt.
 
 name: Live Deploy (Skills master)
+
 'on':
-  workflow_dispatch: null
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Live deployen? (nur auf master wirksam; false = nur bauen)"
+        type: boolean
+        default: true
   push:
     branches:
-    - master
+      - master
+      - 'ci-test/**'
+
 concurrency:
-  group: live-skills-master
+  group: live-skills-${{ github.ref }}
   cancel-in-progress: false
+
 permissions:
   contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DO_DEPLOY: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || inputs.deploy) }}
     steps:
-    - name: Checkout vitalos (Meta-Repo, liefert Nachbar-Repos)
-      uses: actions/checkout@v4
-      with:
-        repository: nimmsel23/vitalos
-        ref: master
-    - name: Private Skills submodule access
-      uses: ./.github/actions/skills-submodule-auth
-      with:
-        deploy-key: ${{ secrets.SKILLS_DEPLOY_KEY }}
-    - name: Submodules via HTTPS + Token
-      run: |
-        git config --global url."https://x-access-token:${{ secrets.GH_SUBMODULE_TOKEN || secrets.GITHUB_TOKEN }}@github.com/".insteadOf "git@github.com:"
-        git submodule sync --recursive
-        git submodule update --init --recursive
-    - name: skills-app auf den ausgelösten Commit setzen
-      run: |
-        cd skills-app
-        SHA="${{ github.sha }}"
-        git fetch origin "$SHA"
-        git checkout "$SHA"
-    - uses: pnpm/action-setup@v4
-      with:
-        version: 11.3.0
-    - uses: actions/setup-node@v5
-      with:
-        node-version: 22
-    - name: Install Skills standalone dependencies
-      working-directory: skills-app
-      run: pnpm install --ignore-workspace --frozen-lockfile --ignore-scripts
-    - name: Verify exercise videos
-      working-directory: skills-app
-      run: node scripts/test-exercise-videos.mjs
-    - name: Build Skills
-      working-directory: skills-app
-      run: pnpm run build
-    - name: Deploy Skills to Firebase Hosting
-      working-directory: skills-app
-      env:
-        FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT || secrets.FIREBASE_SERVICE_ACCOUNT_FITNESS_AOS }}
-      run: |
-        printf '%s' "$FIREBASE_SA" > "$RUNNER_TEMP/skills-sa.json"
-        GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/skills-sa.json" \
-          npx firebase-tools@latest deploy --only hosting:skills \
-          --project fitness-aos --non-interactive
+      - name: Checkout skills-dev
+        uses: actions/checkout@v4
+        with:
+          path: skills-dev
+          # Volle Historie: der Changelog liest bei workflow_dispatch `git log <parent>..HEAD`.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.3.0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: skills-dev/pnpm-lock.yaml
+
+      - name: Install Skills standalone dependencies
+        working-directory: skills-dev
+        run: pnpm install --ignore-workspace --frozen-lockfile --ignore-scripts
+
+      - name: Verify exercise videos
+        working-directory: skills-dev
+        run: node scripts/test-exercise-videos.mjs
+
+      - name: Build Skills
+        working-directory: skills-dev
+        run: pnpm run build
+
+      - name: Deploy Skills to Firebase Hosting
+        if: env.DO_DEPLOY == 'true'
+        working-directory: skills-dev
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT || secrets.FIREBASE_SERVICE_ACCOUNT_FITNESS_AOS }}
+        run: |
+          printf '%s' "$FIREBASE_SA" > "$RUNNER_TEMP/skills-sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/skills-sa.json" \
+            npx firebase-tools@latest deploy --only hosting:skills \
+            --project fitness-aos --non-interactive

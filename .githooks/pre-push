@@ -23,7 +23,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 done <<< "$pushed_refs"
 
 if [ -n "$fitness_source_sha" ]; then
-  fitness_repo="${FITNESS_DEV_REPO:-$HOME/fitness-dev}"
+  fitness_repo="${FITNESS_DEV_REPO:-$HOME/dev/fitness-dev}"
   publisher="$fitness_repo/scripts/publish-mini-app-to-fitness.mjs"
   if [ -f "$publisher" ]; then
     echo "🔄 Skills dev → Fitness dev: synchronizing the pushed source commit…"
