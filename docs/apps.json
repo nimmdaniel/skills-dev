@@ -1,0 +1,16 @@
+{
+  "repo": "skills-dev",
+  "apps": [
+    {
+      "id": "skills",
+      "kind": "main",
+      "name": "Skills",
+      "short": "Skills",
+      "description": "Calisthenics-Skills mit Progression und Workout-Runner",
+      "accent": "#c8ff00",
+      "site": "vos-skills",
+      "url": "https://vos-skills.web.app",
+      "tab": null
+    }
+  ]
+}
