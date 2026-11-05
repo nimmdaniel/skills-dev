@@ -4,7 +4,7 @@ import PersistenceStatus from './PersistenceStatus.jsx';
 import { ChevronLeft, ChevronRight, Lock, Check, Circle, Play, Pause, Flag, Trophy, ArrowUp, ArrowDown, Activity } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-import { SKILLS, assessStage } from './data/catalog.js';
+import { SKILLS } from './data/catalog.js';
 import { progressStore } from './data/store.js';
 import { useProgress } from './data/useProgress.js';
 import { toHostWorkout } from './data/workoutCompletion.js';
@@ -12,6 +12,7 @@ import { attachNav, neighborId, orderedIds } from './navigation.js';
 import { createRunner } from './runner/engine.js';
 import { buildWorkoutBlocks } from './runner/blocks.js';
 import { attachRunnerLifecycle } from './runner/lifecycle.js';
+import { runnerView } from './runner/view.js';
 export { SKILLS, buildWorkoutBlocks };
 
 const SKILL_ORDER = orderedIds(SKILLS);
@@ -231,16 +232,13 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
       window.dispatchEvent(new CustomEvent('skills-runner', { detail: false }));
     };
   }, [runner]);
-  const { blocks, phase, log, rpe, startedAt, reps: actualReps,
-    bi: blockIndex, si: setIndex, left: remainingMs, workMs: workElapsedMs } = runner;
-  const block = runner.p, nextBlock = blocks[blockIndex + 1], isHold = runner.isHold;
-  const setActualReps = update => runner.adj(update(actualReps) - actualReps);
-  const completeRepsSet = () => runner.finishSet();
-  const addRestTime = () => runner.addRest();
+  const { blocks, phase, log, rpe, startedAt, bi: blockIndex, si: setIndex } = runner;
+  const view = runnerView(runner, progressStore.getSnapshot().progress?.[skill.id]?.exp || 0);
+  const block = runner.p, nextBlock = blocks[blockIndex + 1];
   const skipRest = () => runner.skip();
   const skipBlock = () => runner.skipBlock();
   const setRpe = value => runner.setRpe(value);
-  const correctRestReps = value => runner.correctSet(blockIndex, setIndex, Number(value));
+  const correctLastSet = value => runner.correctSet(blockIndex, setIndex, Number(value));
   const metTarget = runner.metTarget();
   function handleExit() { runner.suspend('later'); onExit(runner.snapshot()); }
   function saveWorkout() {
@@ -249,14 +247,13 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
   }
 
   const phaseColor = phase === 'rest' ? '#38bdf8' : 'var(--accent)';
-  const phaseLabel = { prep: 'Bereit machen', work: isHold ? 'Halten' : 'Wiederholungen', rest: 'Pause', done: 'Fertig' }[phase];
-
   const nextPreviewLabel = (() => {
     if (phase !== 'rest') return null;
     if (setIndex + 1 < block.sets) return `Satz ${setIndex + 2}/${block.sets} ${block.name}`;
     if (nextBlock) return `${nextBlock.role}: ${nextBlock.name}`;
-    return 'Letzter Satz — gleich fertig';
+    return 'Letzter Satz — danach fertig';
   })();
+  const bigStyle = { color: view.reached ? 'var(--accent)' : undefined };
 
   return (
     <div
@@ -264,94 +261,78 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
       style={{ background: phase === 'rest' ? 'rgba(56,189,248,0.1)' : 'var(--accent-glow, rgba(0,0,0,0.05))', border: `1px solid ${phase === 'rest' ? 'rgba(56,189,248,0.35)' : 'var(--line)'}` }}
     >
       {runner.persistenceError && <p role="alert">Nicht gesichert: {runner.persistenceError}</p>}
+      {runner.paused && phase !== 'done' && <p role="status" className="text-xs mb-2">{runner.interruption || 'Pausiert'} · Weiter zum Fortsetzen</p>}
       {phase !== 'done' && (
         <>
           <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--dim)' }}>
-            Übung {blockIndex + 1}/{blocks.length} · {block.role}
+            {view.blockLabel} · {block.role}
           </div>
           <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: phaseColor }}>
-            {runner.paused ? 'Pausiert · Weiter zum Fortsetzen' : phaseLabel} · Satz {setIndex + 1}/{block.sets}
+            {view.phaseLabel} · {view.setLabel}
           </div>
           <div className="text-lg font-black text-fit-ink mb-3">{block.name}</div>
           {phase !== 'rest' && <ExerciseVideo key={block.name} name={block.name} autoPlay />}
 
-          {phase === 'work' && !isHold && (
+          {phase === 'prep' && (
             <>
-              <div className="text-[11px] font-bold mb-1" style={{ color: 'var(--dim)' }}>Ziel: {block.reps}× Wdh</div>
-              <div className="flex items-center justify-center gap-4 mb-1">
-                <button
-                  onClick={() => setActualReps(n => Math.max(0, n - 1))}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black"
-                  style={{ background: 'var(--bg2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
-                >
-                  −
-                </button>
-                <div className="text-4xl font-black tabular-nums text-fit-ink w-16">{actualReps}</div>
-                <button
-                  onClick={() => setActualReps(n => n + 1)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black"
-                  style={{ background: 'var(--bg2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
-                >
-                  +
-                </button>
-              </div>
-              <div className="text-[11px] font-bold mb-4" style={{ color: 'var(--dim)' }}>Laufzeit: {formatHoldTime(workElapsedMs)}</div>
-              <button
-                onClick={completeRepsSet}
-                className="w-full min-h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-black uppercase tracking-[0.16em]"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-              >
-                <Check size={16} strokeWidth={3} /> Satz erledigt
+              <p className="text-xs mb-4" style={{ color: 'var(--dim)' }}>{view.hint}</p>
+              <button onClick={skipRest} className="w-full min-h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-black uppercase tracking-[0.16em]" style={{ background: 'var(--accent)', color: '#fff' }}>
+                <Play size={16} strokeWidth={3} /> Start
               </button>
             </>
           )}
 
-          {(phase === 'work' && isHold) && (
-            <div><div className="text-5xl font-black tabular-nums text-fit-ink">{Math.ceil(remainingMs / 1000)}s</div><button className="min-h-12 px-5 rounded-xl" onClick={() => runner.finishSet()}>Halten beenden</button></div>
-          )}
-
-          {phase === 'prep' && (
-            <div className="text-5xl font-black tabular-nums text-fit-ink">{Math.ceil(remainingMs / 1000)}s</div>
+          {phase === 'work' && (
+            <>
+              {/* Holds: Stoppuhr zählt hoch. Wiederholungen: Zielwert, echte Zahl folgt per Slider. */}
+              <div className="text-5xl font-black tabular-nums text-fit-ink" style={bigStyle}>
+                {view.hold ? `${view.value}s` : `${view.value}×`}
+              </div>
+              <div className="text-[11px] font-bold mt-1 mb-1" style={{ color: 'var(--dim)' }}>
+                {view.hold ? 'Mindestziel' : 'Ziel'} {view.target} {view.hold ? 's' : 'Wdh'}{!view.hold && ` · Laufzeit ${formatHoldTime(runner.workMs)}`}
+              </div>
+              <p className="text-xs mb-4" style={{ color: view.reached ? 'var(--accent)' : 'var(--dim)' }}>{view.hint}</p>
+              <button
+                onClick={() => runner.finishSet()}
+                className="w-full min-h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-black uppercase tracking-[0.16em]"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                <Check size={16} strokeWidth={3} /> {view.primaryButton}
+              </button>
+            </>
           )}
 
           {phase === 'rest' && (
             <>
-              <div className="text-5xl font-black tabular-nums text-fit-ink mb-2">{Math.ceil(remainingMs / 1000)}s</div>
-              {log[blockIndex]?.[setIndex] !== undefined && (
+              <div className="text-5xl font-black tabular-nums text-fit-ink mb-1" style={{ color: view.restReached ? 'var(--accent)' : undefined }}>{view.elapsed}s</div>
+              <div className="text-[11px] font-bold mb-3" style={{ color: 'var(--dim)' }}>Pause · empfohlen {view.restTarget}s</div>
+              {view.slider && (
                 <label className="block text-left mb-4">
                   <span className="block text-xs font-bold text-fit-ink mb-2">
-                    Letzter Satz: {log[blockIndex][setIndex]} {isHold ? 'Sek.' : 'Wdh'}
+                    Letzter Satz: {view.slider.value} {view.unit}{view.slider.reachedTarget ? ' · Ziel erreicht' : ` · Ziel ${view.target} ${view.unit}`}
                   </span>
                   <input
                     type="range"
-                    min="0"
-                    max={Math.max(20, (block.reps || block.seconds) * 2, log[blockIndex][setIndex])}
-                    value={log[blockIndex][setIndex]}
-                    onChange={event => correctRestReps(event.target.value)}
+                    min={view.slider.min}
+                    max={view.slider.max}
+                    step={view.slider.step}
+                    value={view.slider.value}
+                    onChange={event => correctLastSet(event.target.value)}
                     className="skills-reps-slider w-full"
-                    aria-label="Ergebnis des letzten Satzes korrigieren"
+                    aria-label="Ergebnis des letzten Satzes anpassen"
                   />
                 </label>
               )}
               {nextPreviewLabel && (
                 <div className="text-[11px] font-bold mb-4" style={{ color: 'var(--dim)' }}>Als Nächstes: {nextPreviewLabel}</div>
               )}
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={addRestTime}
-                  className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-[0.12em]"
-                  style={{ background: 'var(--bg2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
-                >
-                  +30s
-                </button>
-                <button
-                  onClick={skipRest}
-                  className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-[0.12em]"
-                  style={{ background: 'var(--bg2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
-                >
-                  Skip
-                </button>
-              </div>
+              <button
+                onClick={skipRest}
+                className="w-full min-h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-black uppercase tracking-[0.16em]"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                {view.primaryButton}
+              </button>
             </>
           )}
         </>
@@ -368,6 +349,7 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
           onSetRpe={setRpe}
           onSave={saveWorkout}
           metTarget={metTarget}
+          exp={view.exp}
         />
       )}
 
@@ -389,7 +371,7 @@ function WorkoutRunner({ skill, stage, resumeState, onFinish, onExit }) {
   );
 }
 
-function SessionSummary({ blocks, log, startedAt, durationSeconds, partial, rpe, onSetRpe, onSave, metTarget }) {
+function SessionSummary({ blocks, log, startedAt, durationSeconds, partial, rpe, onSetRpe, onSave, metTarget, exp }) {
   const totalSeconds = durationSeconds ?? Math.round((Date.now() - startedAt) / 1000);
   const sumType = type => blocks.reduce((sum, b, i) => sum + (b.type === type ? log[i].reduce((s, v) => s + v, 0) : 0), 0);
 
@@ -403,7 +385,12 @@ function SessionSummary({ blocks, log, startedAt, durationSeconds, partial, rpe,
         </div>
         {metTarget && (
           <div className="text-[11px] font-black mt-2 px-3 py-1.5 rounded-lg inline-block" style={{ background: 'var(--accent-glow, rgba(200,255,0,0.12))', color: 'var(--accent)' }}>
-            ✓ Zielwerte erreicht — zählt mit Technikbestätigung als Trainingsnachweis
+            ✓ Zielwerte erreicht
+          </div>
+        )}
+        {exp && (
+          <div className="text-[11px] font-black mt-2" style={{ color: 'var(--accent)' }}>
+            +{exp.session} % EXP · Stand {exp.after} %{exp.after >= 100 ? ' — nächste Stufe wird freigeschaltet' : ''}
           </div>
         )}
       </div>
@@ -655,11 +642,14 @@ function VolumeChart({ sessions }) {
   );
 }
 
-function SkillDetailScreen({ skill, stage, mastered, history, holds, sessions, position, stepDir, onStep, onRunnerActive, onBack, onMaster, onDowngrade, onLogHold, onLogWorkout }) {
+function SkillDetailScreen({ skill, stage: frontier, mastered, exp, history, holds, sessions, position, stepDir, onStep, onRunnerActive, onBack, onLogHold, onLogWorkout }) {
+  // `frontier` is the highest unlocked stage. Only unlocked stages can be trained;
+  // the next stage stays locked until the frontier reaches 100 % EXP.
+  const [picked, setPicked] = useState(frontier);
+  const stage = Math.min(picked, frontier);
   const stageInfo = skill.progressions[stage];
-  const next = skill.progressions[stage + 1];
-  const isLast = stage >= skill.progressions.length - 1;
-  const assessment = assessStage(stageInfo, sessions);
+  const next = skill.progressions[frontier + 1];
+  const expPercent = Math.min(100, Math.round(exp));
   const [runnerActive, setRunnerActive] = useState(false);
   const [expandedVideo, setExpandedVideo] = useState(null);
   const [resumeState, setResumeState] = useState(() => {
@@ -702,7 +692,7 @@ function SkillDetailScreen({ skill, stage, mastered, history, holds, sessions, p
 
       <h3 className="text-xl font-black text-fit-ink mb-1">{skill.name}</h3>
       <div className="text-[11px] font-bold mb-5" style={{ color: 'var(--dim)' }}>
-        Stufe {stage + 1} von {skill.progressions.length}
+        Stufe {stage + 1} von {skill.progressions.length}{stage < frontier ? ' · bereits freigeschaltet' : ''}
       </div>
 
       {runnerActive ? (
@@ -787,52 +777,39 @@ function SkillDetailScreen({ skill, stage, mastered, history, holds, sessions, p
         onLog={(duration) => onLogHold(stage, duration)}
       />
 
-      <p className="text-xs mb-2" style={{color:'var(--dim)'}}>
-        {assessment.qualified}/{stageInfo.advancement.qualifyingSessions} saubere Trainings · {assessment.days}/{stageInfo.advancement.distinctDays} Trainingstage.
-        {assessment.ready ? ' Aufstiegskriterium erfüllt.' : ' Technik und Wiederholbarkeit vor Stufenwechsel prüfen.'}
-      </p>
-      {!mastered ? (
-        <button
-          onClick={onMaster}
-          className="w-full py-2.5 flex items-center justify-center gap-1.5 text-[11px] font-bold"
-          style={{ color: 'var(--dim)' }}
-        >
-          <Check size={13} strokeWidth={2.7} /> {isLast ? 'Meisterschaft bestätigen' : assessment.ready ? 'Nächste Stufe bestätigen' : 'Stufe manuell bestätigen'}
-        </button>
-      ) : (
-        <div className="text-center py-3 text-sm font-black" style={{ color: 'var(--accent)' }}>
-          🏆 {skill.name} gemeistert
+      <div className="mb-4" role="group" aria-label="EXP">
+        <div className="flex justify-between text-[11px] font-bold mb-1" style={{ color: 'var(--dim)' }}>
+          <span>EXP {mastered ? 100 : expPercent} %</span>
+          <span>{mastered ? '🏆 ' + skill.name + ' gemeistert' : next ? `Bei 100 % wird „${next.name}“ freigeschaltet` : 'Bei 100 % ist der Skill gemeistert'}</span>
         </div>
-      )}
-
-      {(stage > 0 || mastered) && (
-        <button
-          onClick={onDowngrade}
-          className="w-full mt-2 py-2 text-[11px] font-bold"
-          style={{ color: 'var(--dim)' }}
-        >
-          ↩ Eine Stufe zurücksetzen
-        </button>
-      )}
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg2)' }}>
+          <div className="h-full" style={{ width: `${mastered ? 100 : expPercent}%`, background: 'var(--accent)' }} />
+        </div>
+        <p className="text-[11px] mt-2" style={{ color: 'var(--dim)' }}>
+          Jeder Satz mit mindestens {stageInfo.advancement.minimumValue} {stageInfo.type === 'hold' ? 's' : 'Wdh'} bringt vollen EXP-Anteil, Mehrleistung zählt als Bonus.
+        </p>
+      </div>
 
       <div className="mt-6">
         <div className="text-[10px] font-black uppercase tracking-[0.15em] mb-2" style={{ color: 'var(--dim)' }}>Kette</div>
         <div className="flex flex-col gap-1.5">
-          {skill.progressions.map((p, i) => (
+          {skill.progressions.map((p, i) => {
+            const locked = i > frontier && !mastered;
+            return (
             <div key={p.name}>
-            <button type="button" onClick={() => setExpandedVideo(value => value === p.name ? null : p.name)} aria-expanded={expandedVideo === p.name} aria-label={`Video zu ${p.name}`} className="w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--bg2)', opacity: i > stage + 1 ? 0.4 : 1 }}>
-              <div className="flex items-center gap-2">
-                {i < stage ? <Check size={14} color="#22c55e" strokeWidth={3} />
-                  : i === stage ? <Circle size={14} style={{ color: 'var(--accent)' }} fill="var(--accent)" />
-                  : i > stage + 1 ? <Lock size={12} style={{ color: 'var(--dim)' }} />
-                  : <Circle size={14} style={{ color: 'var(--dim)' }} />}
-                <span className="text-sm" style={{ color: i === stage ? 'var(--ink)' : 'var(--dim)', fontWeight: i === stage ? 700 : 500 }}>{p.name}</span>
-              </div>
-              <span className="text-[10px] font-mono" style={{ color: 'var(--dim)', opacity: 0.7 }}>{formatTarget(p)} · Video</span>
-            </button>
+            <div className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--bg2)', opacity: locked ? 0.45 : 1, outline: i === stage ? '1px solid var(--accent)' : 'none' }}>
+              <button type="button" disabled={locked || runnerActive} onClick={() => setPicked(i)} aria-label={locked ? `${p.name} gesperrt` : `${p.name} trainieren`} className="flex items-center gap-2 text-left min-w-0">
+                {locked ? <Lock size={12} style={{ color: 'var(--dim)' }} />
+                  : i < frontier || mastered ? <Check size={14} color="#22c55e" strokeWidth={3} />
+                  : <Circle size={14} style={{ color: 'var(--accent)' }} fill="var(--accent)" />}
+                <span className="text-sm truncate" style={{ color: i === stage ? 'var(--ink)' : 'var(--dim)', fontWeight: i === stage ? 700 : 500 }}>{p.name}</span>
+              </button>
+              <button type="button" onClick={() => setExpandedVideo(value => value === p.name ? null : p.name)} aria-expanded={expandedVideo === p.name} aria-label={`Video zu ${p.name}`} className="text-[10px] font-mono shrink-0" style={{ color: 'var(--dim)', opacity: 0.7 }}>{formatTarget(p)} · Video</button>
+            </div>
             {expandedVideo === p.name && <ExerciseVideo key={p.name} name={p.name} />}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -881,19 +858,6 @@ export default function SkillsCard({ onWorkoutComplete } = {}) {
     if (busy) return;
     setBusy(true); setActionError('');
     try { await operation(); return true; } catch (e) { setActionError(e.message); return false; } finally { setBusy(false); }
-  }
-  function master(skillId, skill) {
-    const entry = progress[skillId] || {stage:0};
-    const next = Math.min(entry.stage + 1, skill.progressions.length - 1);
-    const last = entry.stage === skill.progressions.length - 1;
-    const assessment = assessStage(skill.progressions[entry.stage],entry.sessions || []);
-    if (!assessment.ready && !window.confirm('Stufe ohne zwei bestätigte Trainings an unterschiedlichen Tagen manuell bestätigen? Dies wird im Verlauf vermerkt.')) return;
-    return action(() => progressStore.record('stage',skillId,skill.progressions[next].id,{mastered:last,manual:!assessment.ready}));
-  }
-  function downgrade(skillId, skill) {
-    const entry = progress[skillId] || {stage:0};
-    const next = entry.mastered ? entry.stage : Math.max(0,entry.stage - 1);
-    return action(() => progressStore.record('stage',skillId,skill.progressions[next].id,{mastered:false,reset:true,manual:true}));
   }
   function logHold(skillId, stage, duration) {
     return action(() => progressStore.record('hold',skillId,SKILLS.find(s => s.id === skillId).progressions[stage].id,{duration}));
@@ -969,6 +933,7 @@ export default function SkillsCard({ onWorkoutComplete } = {}) {
           skill={openSkill}
           mastered={progress[openSkill.id]?.mastered === true}
           stage={progress[openSkill.id]?.stage ?? 0}
+          exp={progress[openSkill.id]?.exp ?? 0}
           history={progress[openSkill.id]?.history ?? []}
           holds={progress[openSkill.id]?.holds ?? []}
           sessions={progress[openSkill.id]?.sessions ?? []}
@@ -977,8 +942,6 @@ export default function SkillsCard({ onWorkoutComplete } = {}) {
           onStep={stepSkill}
           onRunnerActive={active => { runnerActiveRef.current = active; }}
           onBack={() => setOpenSkillId(null)}
-          onMaster={() => master(openSkill.id, openSkill)}
-          onDowngrade={() => downgrade(openSkill.id, openSkill)}
           onLogHold={(stage, duration) => logHold(openSkill.id, stage, duration)}
           onLogWorkout={(stage, sessionData) => logWorkout(openSkill.id, stage, sessionData)}
         />

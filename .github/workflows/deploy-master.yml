@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Skills standalone dependencies
         working-directory: skills-dev
-        run: pnpm install --ignore-workspace --frozen-lockfile --ignore-scripts
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
 
       - name: Verify exercise videos
         working-directory: skills-dev

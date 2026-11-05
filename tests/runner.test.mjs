@@ -26,14 +26,14 @@ test('elapsed time comes from the clock, and interval ticks do not write checkpo
   const f = fixture(); f.r.start(); f.r.start(); assert.equal(f.count(), 1);
   f.r.skip(); const count = f.writes.length;
   f.tick(1250); f.tick(2750);
-  assert.equal(f.r.workMs, 4000); assert.equal(f.r.left, 16000);
+  assert.equal(f.r.workMs, 4000); assert.equal(f.r.left, 0, 'hold runs forward as a stopwatch');
   assert.equal(f.writes.length, count);
   f.r.finishSet(); assert.deepEqual(f.r.log, [[4]]); assert.equal(f.r.phase, 'rest');
   f.r.finishSet(); assert.deepEqual(f.r.log, [[4]], 'double click cannot duplicate a set');
 });
 test('manual pause excludes elapsed downtime and preserves the hold', () => {
   const f = fixture(); f.r.skip(); f.tick(4000); f.r.pause();
-  f.tick(60000); assert.equal(f.r.workMs, 4000); assert.equal(f.r.left, 16000);
+  f.tick(60000); assert.equal(f.r.workMs, 4000);
   f.r.pause(); f.tick(3000); f.r.finishSet();
   assert.equal(f.r.log[0][0], 7); assert.equal(f.r.activeDurationMs, 7000);
 });
@@ -44,9 +44,11 @@ test('a long unobserved gap pauses instead of inventing successful holds', () =>
   f.r.finishSet(); assert.deepEqual(f.r.log, [[]]);
   f.r.pause(); f.tick(1000); f.r.finishSet(); assert.deepEqual(f.r.log, [[3]]);
 });
-test('last set finishes immediately without a redundant rest; summary timestamp is stable', () => {
+test('the last set still offers the slider step; summary timestamp is stable', () => {
   const f = fixture({ blocks: [{ ...skill.progressions[1], sets: 1 }] });
-  f.r.skip(); f.r.adj(-2); f.r.finishSet();
+  f.r.skip(); f.r.finishSet();
+  assert.equal(f.r.phase, 'rest', 'last set also ends in the adjust step'); assert.deepEqual(f.r.log, [[5]]);
+  assert(f.r.correctSet(0, 0, 3)); f.r.skip();
   assert.equal(f.r.phase, 'done'); assert.deepEqual(f.r.log, [[3]]);
   const data = f.r.sessionData(); f.advance(60000);
   assert.deepEqual(f.r.sessionData(), data);
@@ -57,7 +59,7 @@ test('v2 reload restores the saved plan and hold state paused without counting d
   const snapshot = f.r.snapshot();
   const next = fixture({ resume: snapshot, blocks: [{ ...skill.progressions[0], seconds: 999 }] });
   assert.equal(next.r.p.seconds, 20); assert.equal(next.r.paused, true);
-  assert.equal(next.r.workMs, 5000); assert.equal(next.r.left, 15000);
+  assert.equal(next.r.workMs, 5000);
   assert.equal(next.r.sessionId, f.r.sessionId);
   next.tick(60000); next.r.pause(); next.tick(2000); next.r.finishSet();
   assert.deepEqual(next.r.log, [[7]]);
@@ -69,7 +71,7 @@ test('legacy rest resume never repeats the set already in the log', () => {
   assert.equal(f.r.phase, 'rest'); assert.equal(f.r.paused, true);
   f.r.pause(); f.r.skip(); assert.equal(f.r.si, 1); assert.equal(f.r.phase, 'prep');
   f.r.skip(); f.tick(3000); f.r.finishSet();
-  assert.deepEqual(f.r.log, [[12, 3]]); assert.equal(f.r.phase, 'done');
+  assert.deepEqual(f.r.log, [[12, 3]]); assert.equal(f.r.phase, 'rest'); f.r.skip(); assert.equal(f.r.phase, 'done');
 });
 test('snapshot and summary are detached copies; partial work and corrections are retained', () => {
   const f = fixture(); f.r.skip(); f.tick(4000); f.r.finishSet();
@@ -83,7 +85,7 @@ test('snapshot and summary are detached copies; partial work and corrections are
 });
 test('skip block produces a partial session even when the final block is completed', () => {
   const f = fixture({ blocks: [{ ...skill.progressions[0], sets: 1 }, { ...skill.progressions[1], sets: 1 }] });
-  f.r.skipBlock(); f.r.skip(); f.r.finishSet();
+  f.r.skipBlock(); f.r.skip(); f.r.finishSet(); f.r.skip();
   assert.equal(f.r.phase, 'done'); assert.equal(f.r.sessionData().status, 'partial');
 });
 test('persistence errors are visible, can be retried, and do not destroy the state', async () => {
@@ -97,9 +99,27 @@ test('detach leaves the checkpoint untouched and supports React effect cleanup/s
   f.r.stop({ persist: false }); assert.equal(f.writes.length, writes); assert.equal(f.r.paused, false);
   f.r.start(); f.tick(1000); assert.equal(f.r.workMs, 1000);
 });
-test('automatic hold completion uses the target and cannot cascade through unseen sets', () => {
+test('a hold is a minimum: it keeps running past the target and the full time counts as extra performance', () => {
   const f = fixture({ blocks: [{ ...skill.progressions[0], seconds: 3 }] });
   f.r.skip(); f.tick(4500);
-  assert.deepEqual(f.r.log, [[3]]); assert.equal(f.r.phase, 'rest');
+  assert.equal(f.r.phase, 'work', 'reaching the target does not end the hold');
+  f.tick(5500); f.r.finishSet();
+  assert.deepEqual(f.r.log, [[10]]); assert.equal(f.r.phase, 'rest');
   assert.equal(f.r.left, 30000);
+  assert(f.r.correctSet(0, 0, 25) && f.r.log[0][0] === 25, 'the rest slider can raise or lower the result');
+});
+test('nothing counts down or advances by itself: start, hold and rest are stopwatches', () => {
+  const f = fixture({ blocks: [{ ...skill.progressions[0], restSeconds: 5 }] });
+  for (let i = 0; i < 6; i++) f.tick(10000);
+  assert.equal(f.r.phase, 'prep', 'no automatic start'); assert.equal(f.r.paused, false);
+  f.r.skip(); f.tick(1000); assert.equal(f.r.workMs, 1000);
+  f.r.finishSet(); f.tick(4000); f.tick(8000);
+  assert.equal(f.r.phase, 'rest', 'rest never ends by itself'); assert.equal(f.r.workMs, 12000);
+  assert.equal(f.r.left, 0);
+});
+test('reps default to the target; the slider result is the saved value', () => {
+  const f = fixture({ blocks: [{ ...skill.progressions[1], sets: 2 }] });
+  f.r.skip(); f.r.finishSet(); assert.deepEqual(f.r.log, [[5]]);
+  assert(f.r.correctSet(0, 0, 7, { live: true })); assert.deepEqual(f.r.log, [[7]]);
+  assert.equal(f.r.correctSet(0, 1, 4), false, 'an unfinished set cannot be edited');
 });

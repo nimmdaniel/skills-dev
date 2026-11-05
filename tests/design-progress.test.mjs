@@ -21,20 +21,13 @@ mock.module('../data/store.js',{exports:{progressStore:{
 }}});
 const {designProgress:bridge} = await import('../data/designProgress.js');
 const skill = bridge.skills.find(s => s.id === 'front-lever');
-test('design adapters use stable stage IDs, explicit mastery and durable save before clearing runners',async () => {
+test('design adapters use stable stage IDs, a fixed progression and durable save before clearing runners',async () => {
   assert.equal(bridge.skills.length,14);
   assert.deepEqual(Object.keys(bridge.categories),['push','pull','core','legs','balance']);
-  assert.equal(await bridge.master(skill,() => false),false);
+  // The progression is fixed: the adapter offers no manual advancing or downgrading.
+  assert.equal(bridge.master,undefined);
+  assert.equal(bridge.downgrade,undefined);
   assert.equal(events.length,0);
-  await bridge.master(skill,() => true);
-  assert.deepEqual(events.at(-1),['stage',skill.id,skill.progressions[1].id,{mastered:false,manual:true}]);
-  saved = {...saved,stage:skill.progressions.length-1};
-  assert.equal(bridge.entry(skill.id).mastered,false);
-  await bridge.master(skill,() => true);
-  assert.equal(events.at(-1)[3].mastered,true);
-  saved.mastered = true;
-  await bridge.downgrade(skill,() => true);
-  assert.equal(events.at(-1)[2],skill.progressions.at(-1).id,'unmastering keeps the final stage selected');
   const session = {metTarget:true,exercises:[{name:'Tuck Front Lever',type:'hold',setsCompleted:[15,15,15,15]}]};
   const count = events.length;
   await bridge.saveWorkout(skill,1,session,{techniqueConfirmed:true});

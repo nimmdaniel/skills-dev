@@ -1,4 +1,4 @@
-import { SKILLS, assessStage } from './catalog.js';
+import { SKILLS } from './catalog.js';
 import { progressStore } from './store.js';
 import { emitHostWorkoutComplete, toHostWorkout } from './workoutCompletion.js';
 
@@ -10,22 +10,6 @@ export const designProgress = {
   entry(skillId) { return progressStore.getSnapshot().progress[skillId] || {stage:0,mastered:false,history:[],holds:[],sessions:[]}; },
   subscribe: progressStore.subscribe,
   snapshot: progressStore.getSnapshot,
-  async master(skill, confirm = message => window.confirm(message)) {
-    const entry = this.entry(skill.id);
-    if (entry.mastered) return false;
-    const assessment = assessStage(skill.progressions[entry.stage],entry.sessions);
-    if (!assessment.ready && !confirm('Stufe ohne zwei bestätigte Trainings an unterschiedlichen Tagen manuell bestätigen? Dies wird im Verlauf vermerkt.')) return false;
-    const stage = Math.min(entry.stage+1,skill.progressions.length-1);
-    await progressStore.record('stage',skill.id,skill.progressions[stage].id,{mastered:entry.stage === skill.progressions.length-1,manual:!assessment.ready});
-    return true;
-  },
-  async downgrade(skill, confirm = message => window.confirm(message)) {
-    const entry = this.entry(skill.id);
-    if ((!entry.mastered && entry.stage === 0) || !confirm(`${skill.name}: eine Stufe zurücksetzen?`)) return false;
-    const stage = entry.mastered ? entry.stage : entry.stage-1;
-    await progressStore.record('stage',skill.id,skill.progressions[stage].id,{mastered:false,reset:true,manual:true});
-    return true;
-  },
   async saveWorkout(skill,stage,data,quality = {}, expectedOwner = progressStore.getSnapshot().owner) {
     if (expectedOwner !== progressStore.getSnapshot().owner) throw new Error('Konto gewechselt; Training gehört zum ursprünglichen Konto');
     const stageId = skill.progressions[stage].id;

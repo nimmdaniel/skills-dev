@@ -1,5 +1,5 @@
 import { SKILLS } from './catalog.js';
-import { projectProgress, validateEvent } from './model.js';
+import { flattenSets, projectProgress, validateEvent } from './model.js';
 import * as local from './local.js';
 import * as cloud from './cloud.js';
 let state = { owner: 'guest', user: null, ready: false, progress: {}, pending: 0, status: 'Lokaler Speicher wird geladen …', error: '', storageWarning: '', revision: 0 };
@@ -109,6 +109,12 @@ export const progressStore = {
       flush();
       return event;
     });
+  },
+  // Queryable performance log: every achieved set as reps or seconds.
+  // filter: { skillId, stageId, since } – all optional.
+  sets(filter = {}) {
+    return flattenSets(rows.map(r => r.event),SKILLS).filter(row =>
+      (!filter.skillId || row.skillId === filter.skillId) && (!filter.stageId || row.stageId === filter.stageId) && (!filter.since || row.at >= filter.since));
   },
   runner() { return runner; },
   saveRunner(value, owner = state.owner, expectedSessionId) {
