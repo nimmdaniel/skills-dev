@@ -13,8 +13,7 @@ Stand 2026-10-29. Ausführlich: `~/vitalos/docs/DEPLOYMENT.md` (GitHub: nimmsel2
 | `master` | **Standalone-Prod** (Hosting-Target `skills` = vos-skills.web.app); deployt nur per CI (`Live Deploy (Skills master)`) | nein, muss nicht existieren |
 | `vitalos` | Stand für die Shell (`~/vitalos/skills-app`); darf hinter `master` liegen | nur als `-app`-Checkout im Meta-Repo |
 
-- Release: `vos-release-pr skills` öffnet den PR `dev → master`. `Check (Skills)` läuft, bei Grün mergt der Auto-Merge
-  (Merge-Commit) und startet den Live-Deploy per Dispatch. Nie von Hand auf `master` pushen, außer Hotfix.
+- Release (automatisch): `dev` committen und pushen ist ausdrücklich erwünscht, nichts bleibt liegen. Nach grünem `Check (Skills)` promotet `.github/workflows/automerge.yml` `dev` per Fast-Forward nach `master` und startet den Live-Deploy per Dispatch (Vorlage und Logik: `~/vitalos-prod/docs/product-dev/ci-auto-promote/`). Kein PR nötig, kein Force-Push. Direkte Hotfix-Pushes auf `master` sind erlaubt; `dev` zieht die Automatik danach nach.
 - Shell: `vos-release skills` merged `origin/master` nach `vitalos` und bumpt den Pointer im Meta-Repo (deployt die Shell).
   Vorher `vos-overview`.
 - Branch-Schutz auf `master` (seit 2026-10-29): Merge nur per PR mit grünem Check `check`; Force-Push und Löschen gesperrt;
@@ -30,10 +29,8 @@ Nach „committen/releasen“ vom User gilt die Freigabe für die ganze Kette, n
 
 1. Tests: `pnpm test` (inkl. `pnpm run test:designs`) und `pnpm run build`. Änderung in `APP.md` vermerken.
 2. Commit auf `dev` (Co-Authored-By-Zeile laut Session), `git push origin dev`.
-3. `vos-release-pr skills` — öffnet den PR `dev → master`. Der Check `check` läuft, Auto-Merge mergt bei Grün und
-   startet den Live-Deploy (`Live Deploy (Skills master)`). Status: `gh pr view <n>`, `gh pr checks <n>`,
-   `gh run list --limit 5` (ohne `-R`, sobald das Standard-Repo gesetzt ist, siehe Stolperfalle unten). Nichts von Hand auf `master` pushen.
-4. Erst wenn der PR `MERGED` und der Live-Deploy grün ist: `vos-release skills --yes` (Shell-Seite: `origin/master` → `vitalos`,
+3. `dev` pushen — nach grünem `check` promotet `automerge.yml` automatisch nach `master` und startet `Live Deploy (Skills master)`. Status: `gh run list --limit 5` (ohne `-R`, sobald das Standard-Repo gesetzt ist, siehe Stolperfalle unten).
+4. Erst wenn `master` den Stand enthält und der Live-Deploy grün ist: `vos-release skills --yes` (Shell-Seite: `origin/master` → `vitalos`,
    Pointer im Meta-Repo bumpen). `--yes` ist ohne TTY Pflicht, sonst bricht `gum confirm` mit „could not open TTY“ ab.
    Vorher optional `vos-release --dry-run skills`.
 5. Schritt 4 blockiert der Auto-Mode-Classifier von Claude Code als „Production Deploy“. Dann nicht umgehen, sondern
