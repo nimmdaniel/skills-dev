@@ -172,3 +172,7 @@ Neues gemeinsames Modul `navigation.js` für die Original-Karte und alle drei De
 - Leistungsdatenbank: jede Einheit bleibt als unveränderliches Ereignis (IndexedDB/Firestore) mit
   Sekunden bzw. Wiederholungen je Satz. Lesen: `progressStore.sets({skillId, stageId, since})` bzw.
   `flattenSets()` in `data/model.js`; Fortschritt/EXP über `getSnapshot().progress[skillId]`.
+- Aufräumen: Technik-/Unterstützungs-/Zusatzgewicht-Eingaben entfernt (schalten nichts mehr frei), der
+  freie Hold-Timer erscheint nur bei Hold-Stufen, Conditioning wiederholt keine Übung der Einheit.
+  Im echten Firefox (Marionette) abgenommen: Rep-Durchlauf mit Slider bis EXP-Zusammenfassung und
+  Hold-Stoppuhr (Planche); noch keine Abnahme am Android-Gerät.

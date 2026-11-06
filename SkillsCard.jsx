@@ -771,11 +771,13 @@ function SkillDetailScreen({ skill, stage: frontier, mastered, exp, history, hol
         </div>
       )}
 
-      <SkillHoldTimer
-        stageName={stageInfo.name}
-        holdsForStage={holds.filter(h => h.stage === stage)}
-        onLog={(duration) => onLogHold(stage, duration)}
-      />
+      {stageInfo.type === 'hold' && (
+        <SkillHoldTimer
+          stageName={stageInfo.name}
+          holdsForStage={holds.filter(h => h.stage === stage)}
+          onLog={(duration) => onLogHold(stage, duration)}
+        />
+      )}
 
       <div className="mb-4" role="group" aria-label="EXP">
         <div className="flex justify-between text-[11px] font-bold mb-1" style={{ color: 'var(--dim)' }}>
@@ -921,12 +923,6 @@ export default function SkillsCard({ onWorkoutComplete } = {}) {
 
       {actionError && <p role="alert" className="text-sm mb-3">{actionError}</p>}
       <fieldset disabled={!ready || busy} style={{minWidth:0}}>
-      {openSkill && <div className="text-xs flex flex-col gap-2 mb-4">
-        <label><input type="checkbox" checked={techniqueConfirmed} onChange={e => setTechniqueConfirmed(e.target.checked)} /> Technik heute sauber eingehalten</label>
-        {openSkill.progressions[progress[openSkill.id]?.stage ?? 0].sidePolicy === 'both' && <label><input type="checkbox" checked={bothSidesConfirmed} onChange={e => setBothSidesConfirmed(e.target.checked)} /> Zielwerte auf beiden Seiten erreicht (jeweils schwächere Seite loggen)</label>}
-        <label>Unterstützung / Band <input className="text-black" value={assistance} onChange={e => setAssistance(e.target.value)} /></label>
-        <label>Zusatzgewicht (kg) <input className="text-black" type="number" min="0" step="0.5" value={addedLoadKg} onChange={e => setAddedLoadKg(e.target.value)} /></label>
-      </div>}
       {ready && (openSkill ? (
         <SkillDetailScreen
           key={`${owner}:${openSkill.id}`}

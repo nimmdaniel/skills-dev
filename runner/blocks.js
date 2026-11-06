@@ -12,6 +12,7 @@ export function buildWorkoutBlocks(skill, stage) {
   const blocks = [{ ...skill.progressions[stage], role: 'Primär' }];
   if (stage > 0) blocks.push({ ...skill.progressions[stage - 1], role: 'Sekundär', restSeconds: 75 });
   const conditioning = CONDITIONING_BY_CATEGORY[skill.category];
-  if (conditioning) blocks.push({ ...conditioning, role: 'Conditioning', restSeconds: 45 });
+  // Never repeat an exercise that is already part of the session (e.g. Scapula Pulls as stage and as conditioning).
+  if (conditioning && !blocks.some(b => b.name === conditioning.name)) blocks.push({ ...conditioning, role: 'Conditioning', restSeconds: 45 });
   return JSON.parse(JSON.stringify(blocks));
 }
