@@ -93,17 +93,15 @@ for (const file of ['a-iron-room.js','b-gravity-map.js','c-riso-climb.js']) {
   active.stop();sr.querySelector('#run')?.remove();
   await click('[data-run]');
   active.phase='done';active.log[0]=Array(active.blocks[0].sets).fill(active.blocks[0].seconds ?? active.blocks[0].reps);renderRunner(active);
-  assert(sr.querySelector('[data-quality="techniqueConfirmed"]'));
+  assert(!sr.querySelector('[data-quality]'),'no technique/assistance inputs: only EXP decides');
   rejectWrite=true;
   await click('[data-save]');
   assert(sr.querySelector('#run'),'failed save keeps summary open');
   assert(alerts.some(a=>a.includes('disk full')));
   rejectWrite=false;
-  const confirm=sr.querySelector('[data-quality="techniqueConfirmed"]');confirm.checked=true;confirm.dispatchEvent(new w.Event('input',{bubbles:true}));
   await click('[data-save]');
   assert(!sr.querySelector('#run'),'successful durable save closes runner');
   assert.equal(snapshot().progress['front-lever'].sessions.length,1);
-  assert.equal(snapshot().progress['front-lever'].sessions[0].techniqueConfirmed,true);
   assert.equal(runnerState,null);
   assert.equal(Math.round(snapshot().progress['front-lever'].exp),50,'one full session earns half of the stage EXP');
   assert.equal(snapshot().progress['front-lever'].stage,0,'next stage stays locked below 100 % EXP');

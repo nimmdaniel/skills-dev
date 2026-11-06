@@ -97,7 +97,6 @@ function mount(host) {
       ${r.paused && r.phase !== 'done' ? '<p role="status">Pausiert · Weiter zum Fortsetzen</p>' : ''}
       ${r.phase !== 'done' ? '<button data-end style="min-height:48px">Training beenden</button>' : ''}
       ${Core.resultHTML(r)}
-      ${r.phase === 'done' ? Core.qualityHTML(r) : ''}
       <div class="r-bot ${r.phase === 'rest' ? 'three' : ''}">
         ${r.phase === 'work' ? `<button class="r-btn pri" data-fin>${isHold ? 'Halten beenden' : 'Satz fertig'}</button>` : ''}
         ${r.phase === 'rest' ? `<button class="r-btn pri" data-skip>${Core.runView(r).primaryButton}</button>` : ''}

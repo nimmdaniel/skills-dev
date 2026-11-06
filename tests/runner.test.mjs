@@ -123,3 +123,7 @@ test('reps default to the target; the slider result is the saved value', () => {
   assert(f.r.correctSet(0, 0, 7, { live: true })); assert.deepEqual(f.r.log, [[7]]);
   assert.equal(f.r.correctSet(0, 1, 4), false, 'an unfinished set cannot be edited');
 });
+test('conditioning never repeats an exercise already in the session', () => {
+  const pull = { id: 'p', category: 'pull', progressions: [{ id: 'p/scapula', name: 'Scapula Pulls', type: 'reps', sets: 3, reps: 10, restSeconds: 60 }] };
+  assert.deepEqual(buildWorkoutBlocks(pull, 0).map(b => b.role), ['Primär']);
+});
