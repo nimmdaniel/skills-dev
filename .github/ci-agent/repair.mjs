@@ -102,6 +102,7 @@ if (run) {
     process.exit(0);
   }
   if (run.conclusion !== "failure") stop(`Lauf endet mit ${run.conclusion}; keine Reparatur nötig.`);
+  if (run.head_commit?.message?.includes("[ci-agent]")) stop("CI-Agent-Commit ist fehlgeschlagen; Reparaturschleife gestoppt.");
   if (run.name.startsWith("Auto-Merge") || run.name.startsWith("Auto-Promote") || run.name.startsWith("CI Agent")) {
     stop("Fehler im Merge-/Promote-Schritt; keine Quellcodeänderung durch Gemini.");
   }

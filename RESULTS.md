@@ -1,3 +1,9 @@
+## 2026-11-07 — Gemini-CI-Agent für Skills vorbereitet
+
+- Agenten-Workflow auf `Check (Skills)`, `Preview (vos-skills)` und `Live Deploy (Skills master)` beschränkt; alte Quer- und Habits/Learn-Trigger entfernt.
+- Fehlende Secrets führen in einen strukturierten Block-Bericht; eigene fehlgeschlagene Reparatur-Commits stoppen die Schleife.
+- Aktuelle Agentenläufe scheiterten beim Checkout vor der Analyse. `SYNC_TOKEN` in Actions einrichten; `GEMINI_API_KEY` und echter Fehler→Reparatur→Check→Deploy-Lauf bleiben zu verifizieren.
+
 ## 2026-11-07 — CI-Agent-Deploy-Routing und No-op-Ausgänge korrigiert
 
 - Reale Modul-Deploy-/Preview-Workflownamen ergänzt; grüne Deploy-Läufe lösen keine Merges aus. Ohne sichere Quellreparatur endet der Agent ohne Commit.
