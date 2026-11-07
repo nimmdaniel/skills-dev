@@ -1,3 +1,7 @@
+## 2026-11-07 — GitHub-Pages-Doku vorbereitet
+
+- `docs/README.md` als Jekyll-Landingpage ergänzt. Die Datei ist auf `/index.html` geroutet; GitHub-Pages-Quelle `dev /docs` muss noch in den Repository-Einstellungen geprüft bzw. aktiviert werden.
+
 ## 2026-11-07 — Gemini-CI-Agent für Skills vorbereitet
 
 - Agenten-Workflow auf `Check (Skills)`, `Preview (vos-skills)` und `Live Deploy (Skills master)` beschränkt; alte Quer- und Habits/Learn-Trigger entfernt.
