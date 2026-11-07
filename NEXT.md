@@ -16,3 +16,9 @@
 - Remote `nimmsel23/skills-dev` + Firebase-Site `vos-skills` anlegen (nur auf Zuruf)
 - ~~Submodul in fitness-dev/vitalos, `vos-release skills`~~ erledigt 2026-10-23 (Modul `skills` in `~/vitalos/bin/vos-release`, impliziert `fitness`)
 - fitness-dev: `Skills/` durch Import/Alias auf dieses Repo ersetzen
+
+
+## Gemini CI-Agent — verbleibende Betriebsprüfung
+
+- [ ] Einen echten roten, code-behebbaren CI-Lauf beobachten und bestätigen, dass Reparatur-Commit, grüner Check und vorgesehener Promote/Deploy enden.
+- [ ] Fehler außerhalb des Codes (fehlende Deploy-Credentials, externe Dienste, Runner-Ausfälle) separat als Diagnose melden; keine ungeprüften Änderungen an Secrets oder Deploy-Konfiguration.
