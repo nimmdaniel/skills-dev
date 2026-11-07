@@ -51,8 +51,8 @@ jobs:
         name: Reparatur committen und Branch aktualisieren
         if: steps.repair.outputs.action == 'repair' || steps.repair.outputs.action == 'merge'
         env:
-          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
-          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
           CI_BRANCH: ${{ steps.repair.outputs.branch }}
           CI_BASE: ${{ steps.repair.outputs.base }}
           CI_TARGET: ${{ steps.repair.outputs.target_branch }}
@@ -64,10 +64,6 @@ jobs:
             git commit -m "merge($CI_BASE): CI conflict repair [ci-agent]"
           else
             git commit -m "fix(ci): source repair [ci-agent]"
-          fi
-          if [ -z "$SYNC_TOKEN" ]; then
-            echo "SYNC_TOKEN fehlt; keine Branch-Aktualisierung wird versucht." >&2
-            exit 1
           fi
           header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$SYNC_TOKEN" | base64 -w0)"
           if [ -n "$CI_TARGET" ]; then
