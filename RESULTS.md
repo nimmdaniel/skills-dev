@@ -1,3 +1,7 @@
+## 2026-11-09 — deps: minor/patch Upgrades
+
+- ncu minor + age-safe vite/rolldown pins.
+
 ## 2026-11-09 — APK `android-latest` Abweichung (AL)
 
 - `gh release view android-latest`: Asset `skills-app-debug.apk` (5.1 MB, updated 2026-11-06T03:10:46Z) gebaut aus `1700952` („Qualitätsfelder entfernt…“).
