@@ -1,3 +1,9 @@
+## 2026-11-09 — APK `android-latest` Abweichung (AL)
+
+- `gh release view android-latest`: Asset `skills-app-debug.apk` (5.1 MB, updated 2026-11-06T03:10:46Z) gebaut aus `1700952` („Qualitätsfelder entfernt…“).
+- `origin/dev` = `origin/master` = `c475d86` — Abstand `1700952..c475d86` = 32 Commits. Live Deploy zuletzt grün (`42625371656`).
+- Kein Rebuild/Upload im AL-Lauf (Owner-Gate, kein Store). Folge-Task `b559bbe6-859e-4ad8-9685-45f60b757790` (+al/+lr).
+
 ## 2026-11-09 — Vite-8-Vorbeuge: transformWithEsbuild → esbuild
 
 - Check-Skripte `scripts/test-design-integration.mjs` + `test-exercise-videos.mjs` rufen `esbuild.transform` direkt; Dev-Dep `esbuild ^0.27.7`.
