@@ -3,12 +3,12 @@ import fs from 'node:fs/promises';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
-import { transformWithEsbuild } from 'vite';
+import * as esbuild from 'esbuild';
 import { SKILLS, assessStage } from '../data/catalog.js';
 import { projectProgress } from '../data/model.js';
 const root = process.argv[2] || fileURLToPath(new URL('..',import.meta.url));
 async function compile(path,deps,globals) {
-  const {code} = await transformWithEsbuild(await fs.readFile(path,'utf8'),path,{format:'cjs',loader:path.endsWith('.jsx') ? 'jsx' : 'js'});
+  const {code} = await esbuild.transform(await fs.readFile(path,'utf8'),{format:'cjs',loader:path.endsWith('.jsx') ? 'jsx' : 'js'});
   const module={exports:{}};
   vm.runInNewContext(code,{...globals,module,exports:module.exports,require:name => {
     if (!(name in deps)) throw new Error('Missing dependency '+name);

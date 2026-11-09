@@ -1,3 +1,8 @@
+## 2026-11-09 — Vite-8-Vorbeuge: transformWithEsbuild → esbuild
+
+- Check-Skripte `scripts/test-design-integration.mjs` + `test-exercise-videos.mjs` rufen `esbuild.transform` direkt; Dev-Dep `esbuild ^0.27.7`.
+- Folge aus 6pack #38 (Vite 8 exportiert `transformWithEsbuild` nicht mehr) — vor dem Skills-Vite-8-Bump.
+
 ## 2026-11-09 — Org-Taskwarrior-Konvention auf dev (Cherry-Pick)
 
 - CTO-Freigabe Task `1c3b5b4f`: lokalen Docs-Commit `217c8fb` (Org-Taskwarrior v1 in `AGENTS.md`/`CLAUDE.md`) auf `origin/dev` cherry-gepickt → `09d447a`.

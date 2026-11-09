@@ -6,7 +6,7 @@ import * as navigation from '../navigation.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
-import { transformWithEsbuild } from 'vite';
+import * as esbuild from 'esbuild';
 const catalog = JSON.parse(await readFile(new URL('../exerciseVideos.json', import.meta.url), 'utf8'));
 let states = [], cursor = 0;
 const hooks = {
@@ -17,7 +17,7 @@ const hooks = {
 const h = (type, props, ...children) => ({ type, props: props || {}, children });
 async function compile(file, extra = '', deps = {}) {
   const url = new URL(file, import.meta.url);
-  const { code } = await transformWithEsbuild(await readFile(url, 'utf8') + extra, url.pathname, { loader: 'jsx', format: 'cjs', jsxFactory: 'h', jsxFragment: 'Fragment' });
+  const { code } = await esbuild.transform(await readFile(url, 'utf8') + extra, { loader: 'jsx', format: 'cjs', jsxFactory: 'h', jsxFragment: 'Fragment' });
   const module = { exports: {} };
   vm.runInNewContext(code, { module, exports: module.exports, URL, h, Fragment: 'fragment', window: { localStorage: { getItem: () => null } }, require: name => deps[name] || (name === 'react' ? hooks : {}) });
   return module.exports;

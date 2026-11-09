@@ -1,3 +1,4 @@
+- ~~Vite-8 transformWithEsbuild-Landmine~~: Testskripte auf esbuild umgestellt (Vorbeuge vor Major).
 # CI-Agent — offener Betriebspunkt
 
 - [ ] Repository-Secrets `SYNC_TOKEN` und `GEMINI_API_KEY` einrichten/prüfen; echten roten Check bis Reparatur, Check, Promote und Deploy beobachten.
