@@ -41,3 +41,18 @@ _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen sta
   - Anleitung Punkte 2 (TODO.md) + 3 (APK `android-latest`) unberührt; Live Deploy `42586995906` lief beim Abschluss noch; Task `16c5fba2` (Dependabot-Stabilitätswache, +betta/+cto) nicht AL.
 - Blocker:
   - (keine)
+
+## 2026-11-09 (Montag) — Abteilungsleiter-Lauf 2 (16:40)
+
+_Automatik (Nachmittagslauf):_
+- Tip: `origin/dev`=`origin/master`=`c475d86`; Live Deploy `42625371656` success; Dependabot-PR #18 (esbuild 0.28.1) open, Check `42625572243` success.
+- Offene Org-Tasks: `16c5fba2` (+betta/+cto), neu `b559bbe6` (+al/+lr APK-Hinterher).
+- Arbeitsbaum Haupt-Checkout: 10 ungetrackte Fremd-Session-Pfade (unberührt).
+
+_Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
+- Erledigt:
+  - Anleitung Punkt 3: `android-latest` Asset aus `1700952` vs Tip `c475d86` (32 Commits); Befund RESULTS/TODO/NEXT; Folge-Task `b559bbe6`; Anleitung `[x] 2026-11-09`. TODO Rules/Katalog `[x]` (Beleg SKILLS-DATA / Runs 39962182296, 39962251260).
+- Offen/Weiter:
+  - Anleitung Punkt 2 Rest: Demo-Loops (16 Tutorials), Handy-Autoplay, Fitness-`Skills/`-Merge, Offline-/Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` nicht AL; PR #18 Dependabot offen.
+- Blocker:
+  - APK-Rebuild/Upload Owner-Gate (Task `b559bbe6`); kein Store, Debug-APK.
