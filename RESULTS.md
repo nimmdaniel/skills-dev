@@ -1,3 +1,8 @@
+## 2026-11-09 — Org-Taskwarrior-Konvention auf dev (Cherry-Pick)
+
+- CTO-Freigabe Task `1c3b5b4f`: lokalen Docs-Commit `217c8fb` (Org-Taskwarrior v1 in `AGENTS.md`/`CLAUDE.md`) auf `origin/dev` cherry-gepickt → `09d447a`.
+- Blocker-Task `57f615f7` entblockt sobald Patch per Auto-Promote auf `origin/master` und `git cherry`-Nachweis greift; lokaler `master`-Checkout erst danach angleichen.
+
 ## 2026-11-07 — CI-Agent-Fix: gh pr list Feld korrigiert
 
 - Journal-Run 42416606547 scheiterte vor Gemini: GitHub CLI meldete `Unknown JSON field: baseRepository`; `gh pr list` beendete den Analyse-Step mit Exit 1. Kein Gemini-API-Key-Fehler.
