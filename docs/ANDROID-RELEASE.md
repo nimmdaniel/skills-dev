@@ -2,7 +2,7 @@
 
 Stand: 2026-11-05. Ziel ist die eigenständige Android-App `at.vitalos.skills`.
 Die Android-App enthält das gebaute Web-Frontend über Capacitor. Sie ist kein
-TWA-Link zur Firebase-Website. Der Web-Release `dev → master → vitalos` bleibt
+TWA-Link zur Firebase-Website. Der Web-Release `dev → master (+ Shell-Pin)` bleibt
 ein eigener Weg; ein erfolgreicher Hosting-Deploy veröffentlicht keine Android-App.
 
 ## Verifizierter Ausgangspunkt
