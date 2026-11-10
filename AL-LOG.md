@@ -99,7 +99,7 @@ _Automatik (Nachmittagslauf):_
 
 _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
 - Erledigt:
-  - Morgen-AUTOMATION: `scripts/build-android.sh` + `package.json` `build:android` pinnt `JAVA_HOME=$HOME/.local/share/jvm/jdk-21` (Override `JAVA_HOME_OVERRIDE`); `docs/ANDROID-RELEASE.md` + RESULTS. Tip vor Push `f4fede4`.
+  - Morgen-AUTOMATION: `scripts/build-android.sh` + `package.json` `build:android` pinnt `JAVA_HOME=$HOME/.local/share/jvm/jdk-21` (Override `JAVA_HOME_OVERRIDE`); Docs/RESULTS; Push `f4fede4..6bd2dce` (`5958151` RESULTS, `6bd2dce` fix).
 - Offen/Weiter:
   - Punkt 2: 16 Tutorial-only ohne Exact-Caliverse (Fuzzy verboten) → Demo-Loops weiter offen; Handy/Fitness-Merge/Sync Owner-Gates. Task `16c5fba2` nicht AL.
 - Blocker:
