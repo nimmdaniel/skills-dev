@@ -1,6 +1,11 @@
 - 2026-11-10: fix(build): `fixRolldownPreloadMarker` in `vite.config.js` (Vite 8 / Rolldown `__VITE_PRELOAD__<hash>` → Blackscreen-Vorbeuge, analog 6pack). Live aktuell ohne Cap-Lazy-Imports noch nicht betroffen; AGENTS.md dokumentiert.
 - 2026-11-10: chore(deps) major stack align — React 19 / Vite 8.3.6 / plugin-react 6.2.1 / Firebase 13 (age-safe pins, pnpm-workspace overrides).
 
+## 2026-11-10 — `build:android` JDK-21-Pin (AL Lauf 2)
+
+- `scripts/build-android.sh` + `package.json` `build:android`: setzt `JAVA_HOME` auf `$HOME/.local/share/jvm/jdk-21` wenn vorhanden (System 17/27 fail an AGP 8). Override `JAVA_HOME_OVERRIDE`.
+- `docs/ANDROID-RELEASE.md` angeglichen. Demo-Loops (TODO): Caliverse ohne Exact-Match / Fuzzy verboten → weiter offen.
+
 ## 2026-11-10 — APK `android-latest` hinter Tip (AL)
 
 - Rebuild Debug-APK aus Tip `70c640f` (Worktree `/dev/shm/wt-abt-skills-dev`, `JAVA_HOME=~/.local/share/jvm/jdk-21.0.13+9`; System-JDK 17/27 scheitern).
