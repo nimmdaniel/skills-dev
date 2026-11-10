@@ -19,7 +19,7 @@
     "build:native": "vite build --mode native",
     "native:sync": "pnpm run build:native && cap sync",
     "native:android": "cap open android",
-    "build:android": "pnpm run native:sync && cd android && ./gradlew assembleDebug",
+    "build:android": "bash scripts/build-android.sh",
     "run:android": "pnpm run native:sync && cap run android",
     "test:runner": "node tests/runner.test.mjs && node scripts/test-runner-integration.mjs"
   },

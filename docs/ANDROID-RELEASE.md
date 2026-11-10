@@ -27,16 +27,15 @@ funktionierenden nativen Login. Die folgenden offenen Abnahmen sind verbindlich.
 Im Repo mit installiertem, zum Lockfile passendem Node-/pnpm-Setup:
 
 ```bash
-export JAVA_HOME="$HOME/.local/share/jvm/jdk-21"
 export ANDROID_HOME="$HOME/Android/Sdk"
 pnpm test
 pnpm run test:designs
-pnpm run native:sync
-cd android
-./gradlew --no-daemon --max-workers=1 assembleDebug
+pnpm run build:android
 ```
 
-JDK/SDK-Pfade sind Beispiele für Alpha. CI verwendet seine eigenen Pfade.
+`pnpm run build:android` setzt `JAVA_HOME` auf `$HOME/.local/share/jvm/jdk-21`,
+wenn dieser Symlink ausführbares `bin/java` hat (`scripts/build-android.sh`).
+Override: `JAVA_HOME_OVERRIDE=/pfad/zu/jdk-21`. CI verwendet seine eigenen Pfade.
 `android/gradle.properties` enthält bewusst keinen absoluten Benutzerpfad.
 Native Builds nacheinander ausführen. `native:sync` erzeugt die Capacitor-Projekte
 und kopiert das aktuelle `dist/`; nach Web-Änderungen kein altes Asset-Bundle verwenden.

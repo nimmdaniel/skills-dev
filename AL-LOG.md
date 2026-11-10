@@ -89,3 +89,18 @@ _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen sta
 - Blocker:
   - (keine)
 - AUTOMATION: `pnpm run build:android` braucht `JAVA_HOME=~/.local/share/jvm/jdk-21.0.13+9` (System 17/27 fail) — in Script/Doku pinnen — ~2 Fehlversuche/Lauf gespart.
+
+## 2026-11-10 (Dienstag) — Abteilungsleiter-Lauf 2 (16:40)
+
+_Automatik (Nachmittagslauf):_
+- Tip: `origin/dev`=`origin/master`=`f4fede4`; CI: PR-AutoMerge `42824743650` success; Auto-Promote schedule `42794634609` success; Live Deploy zuletzt `42751567771` success.
+- Offene Org-Tasks: `16c5fba2` (+betta/+cto). Keine neuen TODO-Listenpunkte.
+- Arbeitsbaum Haupt-Checkout: `dev...origin/dev` sauber.
+
+_Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
+- Erledigt:
+  - Morgen-AUTOMATION: `scripts/build-android.sh` + `package.json` `build:android` pinnt `JAVA_HOME=$HOME/.local/share/jvm/jdk-21` (Override `JAVA_HOME_OVERRIDE`); `docs/ANDROID-RELEASE.md` + RESULTS. Tip vor Push `f4fede4`.
+- Offen/Weiter:
+  - Punkt 2: 16 Tutorial-only ohne Exact-Caliverse (Fuzzy verboten) → Demo-Loops weiter offen; Handy/Fitness-Merge/Sync Owner-Gates. Task `16c5fba2` nicht AL.
+- Blocker:
+  - (keine)
