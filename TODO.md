@@ -10,4 +10,4 @@
   IndexedDB/localStorage und automatischen Firestore-Sync im Worktree bauen.
 - [x] 2026-10-23: Gemeinsame Produktions-Rules um Skills-Vertrag erweitern; Katalog seeden (`docs/SKILLS-DATA.md`, VitalOS-Runs 39962182296 / 39962251260).
 - [ ] Skills-Release und echten Offline-/Zweigeräte-Sync abnehmen.
-- [ ] Debug-APK GitHub-Release `android-latest` hinter Tip ziehen (`1700952` → aktuell; Org-Task `b559bbe6`).
+- [x] 2026-11-10: Debug-APK GitHub-Release `android-latest` hinter Tip ziehen (`70c640f`, sha256 `0144c5af…`; Org-Task `b559bbe6` done).
