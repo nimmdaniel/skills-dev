@@ -105,7 +105,10 @@ mit dem Zertifikat der von Play ausgelieferten App funktionieren.
   Aufbewahrung/Löschung aus realen Betreiberangaben übernehmen.
 - **Android-Lifecycle:** Zurück-Geste, App-Wechsel, Prozessneustart, Display-Sperre,
   Audio-Unterbrechung, Safe Areas und Tastatur am Gerät abnehmen. Installiertes
-  `@capacitor/app` allein beweist keine Lifecycle-Anbindung.
+  `@capacitor/app` allein beweist keine Lifecycle-Anbindung. Web-Build: Vite-8-
+  Plugin `fixRolldownPreloadMarker` in `vite.config.js` behalten (sonst
+  `__VITE_PRELOAD__<hash>` → SyntaxError/Blackscreen, siehe 6pack).
+
 - **Medien:** Verfügbarkeit und Nutzungsrechte für die kommerzielle App prüfen.
   Öffentlich erreichbare Demo-Videos sind kein Beleg für kommerzielle Lizenz.
   Offline-Training braucht auch ohne Video verständliche Technikhinweise.

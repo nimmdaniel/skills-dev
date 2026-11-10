@@ -20,6 +20,14 @@ Stand 2026-11-09. Ausführlich: `~/vitalos/docs/DEPLOYMENT.md`.
 - Default-Branch des Repos ist `master`; die Workflows auf `master` bestimmen das Live-Verhalten.
 <!-- release-weg:end -->
 
+## Vite 8 / Rolldown
+
+`vite.config.js` enthält `fixRolldownPreloadMarker`. Rolldown hängt sonst an
+`__VITE_PRELOAD__` einen Hash; Vite ersetzt nur die Marke und lässt `[]<hash>`
+im Bundle (SyntaxError → Blackscreen, wie bei `vos-6pack.web.app`). Plugin nicht
+entfernen, sobald Capacitor-Lazy-`import('./web')` im Web-Build landet.
+
+
 ## Org-Taskwarrior (global) — gilt fuer alle Agenten der VitalOS-Org
 
 Verbindlich fuer alle Agenten (Vibe, Claude, Codex, Gemini) in Org-Kontexten
