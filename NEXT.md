@@ -1,4 +1,6 @@
 - ~~Vite-8 transformWithEsbuild-Landmine~~: Testskripte auf esbuild umgestellt (Vorbeuge vor Major).
+- ~~Vite-8 Rolldown `__VITE_PRELOAD__`-Blackscreen~~: `fixRolldownPreloadMarker` vorbeugend (wie 6pack).
+
 # CI-Agent — offener Betriebspunkt
 
 - [ ] Repository-Secrets `SYNC_TOKEN` und `GEMINI_API_KEY` einrichten/prüfen; echten roten Check bis Reparatur, Check, Promote und Deploy beobachten.
