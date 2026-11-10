@@ -56,3 +56,36 @@ _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen sta
   - Anleitung Punkt 2 Rest: Demo-Loops (16 Tutorials), Handy-Autoplay, Fitness-`Skills/`-Merge, Offline-/Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` nicht AL; PR #18 Dependabot offen.
 - Blocker:
   - APK-Rebuild/Upload Owner-Gate (Task `b559bbe6`); kein Store, Debug-APK.
+
+## 2026-11-10 (Dienstag) — Abteilungsleiter-Lauf
+
+_Automatik (vos-al-log Vorlage 2026-11-10):_
+- Commits seit 2026-11-08: 70c640f fix(build): prevent Vite 8 Rolldown preload-marker blackscreen
+cbc5122 docs: auto-update NEXT.md
+ebea2ef docs: auto-update RESULTS.md
+55940bc chore(deps): major upgrades to React 19 / Vite 8 / Firebase 13
+e2ade88 chore(deps): lockfile + age-safe pins
+1235339 chore(deps): minor/patch upgrades (age-safe pins)
+1259fa7 build(deps-dev): bump esbuild from 0.27.7 to 0.28.1 (#18)
+ad1126d docs: NEXT.md nach Cherry-Pick-Konflikt wiederherstellen
+fefd27f chore: CI/AGENTS — Shell-Pin auf origin/master (kein vitalos-Vorspulen)
+5ea5ccb docs(al): AL-LOG Lauf 2 — APK android-latest Abweichung (1700952 vs c475d86)
+38f8b0a docs: auto-update TODO.md
+be0ff2d docs: auto-update NEXT.md
+d3d4fdb docs: auto-update RESULTS.md
+c475d86 fix(ci): Vite-8-Vorbeuge — Tests ohne transformWithEsbuild
+1998f3e docs(al): AL-LOG 2026-11-09 + RESULTS für Org-Taskwarrior-Cherry-Pick
+- Offene PRs: (keine offenen PRs / gh nicht verfuegbar)
+- CI (letzte Läufe): completed	success	Gemini CI Agent	Gemini CI Agent	master	workflow_run	42750890461	12s	2026-11-10T03:39:49Z
+in_progress		Live Deploy (Skills master)	Live Deploy (Skills master)	master	workflow_dispatch	42750865084	27s	2026-11-10T03:39:34Z
+completed	success	Auto-Promote dev -> master (Check (Skills))	Auto-Promote dev -> master (Check (Skills))	master	workflow_run	42750852426	11s	2026-11-10T03:39:26Z
+- Arbeitsbaum: sauber
+
+_Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
+- Erledigt:
+  - Task `b559bbe6`: Debug-APK aus Tip `70c640f` (JDK 21) → `gh release android-latest` Asset `skills-app-debug.apk` sha256 `0144c5af…` 4643043 B (2026-11-10T03:44:51Z); Live Deploy `42750865084` success; TODO/NEXT `[x]`; Task closed.
+- Offen/Weiter:
+  - Anleitung Punkt 2 Rest: Demo-Loops, Handy-Autoplay, Fitness-`Skills/`-Merge, Offline-/Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` (+betta/+cto): PR #18 = `1259fa7`, Check `42750812927` success — nicht AL.
+- Blocker:
+  - (keine)
+- AUTOMATION: `pnpm run build:android` braucht `JAVA_HOME=~/.local/share/jvm/jdk-21.0.13+9` (System 17/27 fail) — in Script/Doku pinnen — ~2 Fehlversuche/Lauf gespart.
