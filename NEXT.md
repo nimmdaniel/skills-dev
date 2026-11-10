@@ -11,7 +11,7 @@
 - [x] Gemeinsamer Runner + idempotentes Speichern + Wiederaufnahme (Etappe 1/2)
 - [x] Feste Progression, EXP-Freischaltung, Stoppuhr-Runner ohne Countdowns, Slider-Anpassung
 - [x] Release: dev → master + Shell-Pin, Rules (Owner-Delete) live, Debug-APK als GitHub-Release `android-latest`
-- [ ] Debug-APK `android-latest` neu bauen/hochladen aus aktuellem `origin/dev` (steht auf `1700952`, Tip `c475d86`; Task `b559bbe6`)
+- [x] 2026-11-10: Debug-APK `android-latest` neu gebaut/hochgeladen aus Tip `70c640f` (Task `b559bbe6` done; JDK 21)
 - [ ] Geräteabnahme am Android-Handy (Anruf, Bildschirmsperre, Zurück-Geste, Neustart)
 - [ ] Native Google-Anmeldung (Capacitor-Plugin + SHA-1/OAuth in Firebase — braucht Konsole)
 - [ ] Datenschutzerklärung + öffentliche Löschanfrage-Seite, Release-Signierung (`SKILLS_UPLOAD_*`), Play-Eintrag
