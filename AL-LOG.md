@@ -146,7 +146,7 @@ _Automatik (Nachmittagslauf):_
 
 _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
 - Erledigt:
-  - Punkt 0: fetch ok; Tip `c966a90`. TODO Offline-Codepfad: Testsuite + `vite build` + `test:sw` grün; TODO/RESULTS/`docs/SKILLS-DATA.md`; Push `c966a90..9d14bad` (`6f8567c` TODO, `efef9d4` RESULTS, `9d14bad` AL-LOG/SKILLS-DATA).
+  - Punkt 0: fetch ok; Tip `c966a90`. TODO Offline-Codepfad: Testsuite + `vite build` + `test:sw` grün; TODO/RESULTS/`docs/SKILLS-DATA.md`; Push `c966a90..a239362`; Check `43051558347` success; Auto-Promote → `origin/master=a239362`; Live Deploy `43051658478`.
 - Offen/Weiter:
   - Punkt 2 Rest: Demo-Loops (16 Tutorial-only), Handy-Autoplay, Zweigeräte-Sync-Abnahme — Owner-Gates. Task `16c5fba2` (+betta/+cto) nicht AL.
 - Blocker:
