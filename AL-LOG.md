@@ -136,3 +136,20 @@ _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen sta
   - Punkt 2 Rest: Demo-Loops (16 Tutorial-only, Exact-Caliverse/Fuzzy verboten), Handy-Autoplay, Offline-/Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` (+betta/+cto) nicht AL.
 - Blocker:
   - (keine)
+
+## 2026-11-11 (Mittwoch) — Abteilungsleiter-Lauf 2 (16:40)
+
+_Automatik (Nachmittagslauf):_
+- Tip vor Arbeit: `origin/dev`=`origin/master`=`c966a90`; CI: Auto-Promote schedule `43008556311` success; PR-AutoMerge `42981817734` success; Live Deploy `42954958915` success.
+- Offene Org-Tasks: `16c5fba2` (+betta/+cto). Keine neuen TODO-Listenpunkte.
+- Arbeitsbaum Haupt-Checkout: `dev...origin/dev` mit fremden Mods `docs/apps.*` + `scripts/portal.mjs` (nicht angefasst).
+
+_Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
+- Erledigt:
+  - Punkt 0: fetch ok; Tip `c966a90`. TODO Offline-Codepfad: Testsuite + `vite build` + `test:sw` grün; TODO/RESULTS/`docs/SKILLS-DATA.md`; Zweigeräte-Abnahme bleibt Owner-Gate.
+- Offen/Weiter:
+  - Punkt 2 Rest: Demo-Loops (16 Tutorial-only), Handy-Autoplay, Zweigeräte-Sync-Abnahme — Owner-Gates. Task `16c5fba2` (+betta/+cto) nicht AL.
+- Blocker:
+  - (keine)
+
+AUTOMATION: `pnpm test` im Temp-Worktree mit symlinktem `node_modules` will Modules-Dir purgen (TTY) — `node`-Direktaufruf der package.json-test-Zeile / `CI=true` — spart Voll-Install pro AL-Lauf.

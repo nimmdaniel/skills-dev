@@ -174,6 +174,10 @@ veröffentlicht. Live-Katalog und Service-Worker-Precache stimmen mit dem
 Quellstand überein. Echte Anmeldung und Zweigeräte-Abnahme bleiben ein separater
 Nutzungstest; die lokalen Kontotrennungs-/Sync- und Emulator-Tests bestanden.
 
+Re-Check 2026-11-11 (AL): Testsuite + `vite build` + `test:sw` grün auf Tip
+`c966a90` (Live Deploy `42954958915`). Offline-Codepfad bestätigt; Zweigeräte-
+Abnahme unverändert Owner-Gate.
+
 CI: https://github.com/nimmsel23/vitalos/actions/runs/39962182296 (Skills),
 https://github.com/nimmsel23/vitalos/actions/runs/39962251260 (Rules + Katalog).
 
