@@ -39,14 +39,17 @@ Runner bleibt lokal; ein Stufenindex allein bedeutet keine Meisterschaft.
 `pnpm run build:android` (baut natives Bundle & Debug-APK),
 `pnpm run run:android` (deployt auf Android-Gerät/Emulator).
 
-## Integration und Release (2026-10-17)
+## Integration und Release (Stand 2026-11-11)
 
-- Entwicklung: `~/skills-dev`, Branch `dev`.
-- Fitness: direktes Git-Submodule `Skills/`, Branch `fitness`; Importpfade bleiben unverändert. Keine Dateien manuell nach Fitness kopieren.
-- Release-Vessel: `~/vitalos/fitness-app/Skills`, gepinnt durch den Fitness-Gitlink.
-- Erst Skills `dev` und `fitness` pushen, dann Fitness-Gitlink committen/pushen und im VitalOS-Fitness-Release übernehmen.
-- Release-Kommando: `vos-release skills` (Dry-Run: `vos-release --dry-run skills`). Voraussetzung: alles auf `dev` committet (Skript committet keinen Arbeitsstand). Ablauf: `dev` pushen → `origin/fitness` per Fast-Forward → Skills-Gitlink in fitness-dev bumpen → automatisch der volle `fitness`-Flow (Merge nach `~/vitalos/fitness-app`, Parent-Bump). `skills` impliziert `fitness`.
-- Production nur über VitalOS-CI: `deploy-skills.yml` für `vos-skills`, `deploy-fitness.yml` für Fitness.
+- Entwicklung: `~/dev/skills-dev`, Branch `dev`. Standalone-Prod: `master` (CI Auto-Promote + Live Deploy).
+- Fitness bindet Skills **nicht** mehr als verschachteltes Git-Submodule `Skills/` ein.
+  Auflösung: Nachbar-Checkout `skills-app`/`skills-dev` über `vite-miniapp-submodules.mjs`
+  (`src/views/Skills` → Repo-Wurzel; Alias `@vos-skills/`). Keine UI-Dateien nach Fitness kopieren.
+- Shell-Vessel: `~/vitalos/skills-app`, Branch-Pin `master` (`.gitmodules`). `vos-release` /
+  `vos-ship` pinnt `origin/master` und bumpt den Meta-Pointer.
+- Legacy: lokaler Branch `fitness` (ohne `origin/fitness`) und alte Gitlink-Doku sind obsolet —
+  Freigabestand für Fitness ist derselbe `master`-Tip wie Standalone.
+- Production: Skills-Hosting über Skills-CI (`vos-skills`); Fitness-Live klont Nachbar-`master`.
 - Vor Änderungen Gitstatus/Branch/Pointer prüfen, fremde Daten und Änderungen erhalten.
 
 ## Übungsvideos
