@@ -1,3 +1,8 @@
+## 2026-11-11 — CI Simplicity: remove Gemini/Merge-Agent
+
+- Removed: gemini-ci-repair.yml
+- Spine: Check → automerge-pr → automerge → Deploy. Exception only vitalos/prod.
+
 ## 2026-11-11 — Offline-/SW-Re-Verifikation (AL Lauf 2)
 
 - Testsuite (package.json `test`, node-Direktaufruf im Temp-Worktree) grün: Katalog/IDB/Store-Sync/Runner/Videos/Designs.
