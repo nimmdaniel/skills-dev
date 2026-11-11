@@ -131,7 +131,7 @@ completed	success	Auto-Promote dev -> master (Check (Skills))	Auto-Promote dev -
 
 _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
 - Erledigt:
-  - Punkt 0: fetch ok; Tip `24d5d0b` = `origin/dev` = `origin/master` (0/0). Live Deploy `42848167841` success (nach `6bd2dce`). TODO Fitness-`Skills/`-Merge: Sibling-Befund (`vite-miniapp-submodules.mjs`, kein Gitlink/`origin/fitness`; lokal `fitness` 98 behind) → Doku CLAUDE/APP/README + TODO/NEXT/RESULTS; Push folgt diesem Commit.
+  - Punkt 0: fetch ok; vor Arbeit Tip `24d5d0b`. TODO Fitness-`Skills/`-Merge: Sibling-Befund (`vite-miniapp-submodules.mjs`, kein Gitlink/`origin/fitness`; lokal `fitness` 98 behind) → Doku CLAUDE/APP/README + TODO/NEXT/RESULTS; Push `24d5d0b..b39281a`; Check `42954753839` success; Auto-Promote → `origin/master=b39281a`; Live Deploy `42954767385`.
 - Offen/Weiter:
   - Punkt 2 Rest: Demo-Loops (16 Tutorial-only, Exact-Caliverse/Fuzzy verboten), Handy-Autoplay, Offline-/Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` (+betta/+cto) nicht AL.
 - Blocker:
