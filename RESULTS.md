@@ -1,3 +1,8 @@
+## 2026-11-11 — Fitness-Skills-Merge Doku (AL)
+
+- Befund: `fitness-dev` ohne `Skills/`/`.gitmodules`; Resolver `vite-miniapp-submodules.mjs` → Sibling `skills-app`/`skills-dev`. VitalOS-Pin `skills-app` = Tip `24d5d0b` (`master`). `origin/fitness` fehlt; lokaler `fitness` 98 behind / 0 ahead.
+- Doku angeglichen: `CLAUDE.md` / `APP.md` / `README.md`; TODO/NEXT abgehakt.
+
 - 2026-11-10: fix(build): `fixRolldownPreloadMarker` in `vite.config.js` (Vite 8 / Rolldown `__VITE_PRELOAD__<hash>` → Blackscreen-Vorbeuge, analog 6pack). Live aktuell ohne Cap-Lazy-Imports noch nicht betroffen; AGENTS.md dokumentiert.
 - 2026-11-10: chore(deps) major stack align — React 19 / Vite 8.3.6 / plugin-react 6.2.1 / Firebase 13 (age-safe pins, pnpm-workspace overrides).
 
