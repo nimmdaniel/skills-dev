@@ -1,3 +1,9 @@
+## 2026-11-11 — Offline-/SW-Re-Verifikation (AL Lauf 2)
+
+- Testsuite (package.json `test`, node-Direktaufruf im Temp-Worktree) grün: Katalog/IDB/Store-Sync/Runner/Videos/Designs.
+- `vite build` + `test:sw` grün: Worker precacht Bundles+Katalog, seedet IndexedDB, liefert Katalog offline (`vos-skills-vmwcagf9c`).
+- Live bereits auf Tip `c966a90` (Deploy `42954958915`). Zweigeräte-/Login-Abnahme bleibt Owner-Gate.
+
 ## 2026-11-11 — Fitness-Skills-Merge Doku (AL)
 
 - Befund: `fitness-dev` ohne `Skills/`/`.gitmodules`; Resolver `vite-miniapp-submodules.mjs` → Sibling `skills-app`/`skills-dev`. VitalOS-Pin `skills-app` = Tip `24d5d0b` (`master`). `origin/fitness` fehlt; lokaler `fitness` 98 behind / 0 ahead.
