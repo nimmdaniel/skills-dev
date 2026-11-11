@@ -4,7 +4,7 @@
 - [x] 2026-10-17: Videos für alle Skills-Progressionen und Conditioning-Übungen: Vorschau und Runner.
 - [ ] 15 Tutorial-Zuordnungen bei Gelegenheit um exakte kurze Demo-Loops ergänzen.
 - [ ] Wiedergabe/Autoplay auf dem Handy abnehmen.
-- [ ] Standalone-Skills-Quelle und den bisherigen Fitness-Ordner Skills/ als eigene Integrationsaufgabe zusammenführen.
+- [x] 2026-11-11: Standalone-Skills-Quelle und Fitness-`Skills/`-Merge — erledigt als Sibling-Checkout (`vite-miniapp-submodules.mjs` → `skills-app`/`skills-dev`); kein Gitlink/`origin/fitness` mehr (lokal `fitness` 98 behind `master`).
 
 - [x] 2026-10-23: Eigenständigen Calisthenics-Katalog, Progressionsmodell,
   IndexedDB/localStorage und automatischen Firestore-Sync im Worktree bauen.
