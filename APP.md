@@ -2,8 +2,9 @@
 
 Standalone-Calisthenics-App und eingebettete Skill-Oberfläche für Fitness.
 Die Progressionen, Videozuordnungen und Trainingsläufe werden gemeinsam mit
-`SkillsCard.jsx` gepflegt. Die bestehende Fitness-Integration importiert diese
-Oberfläche direkt aus dem Skills-Git-Submodule.
+`SkillsCard.jsx` gepflegt. Fitness löst die Oberfläche über den Nachbar-Checkout
+(`skills-app`/`skills-dev`) mit `vite-miniapp-submodules.mjs` auf — kein
+verschachteltes `Skills/`-Git-Submodule mehr.
 
 ## In-App-Update-Changelog
 
@@ -32,10 +33,9 @@ Dialog geöffnet; dort zeigt die Shell alle App-Änderungen einmal gebündelt.
 
 - `pnpm run firebase` baut und deployt nach `vos-skills.web.app`.
 - `pnpm run deploy` deployt das vorhandene `dist/` ohne Build.
-- Fitness verwendet das Git-Submodule `Skills/` auf Branch `fitness`.
-- Fitness-Production wird über `fitness-dev` und den Release-Branch
-  `fitness-app/vitalos` integriert; der VitalOS-Parent pinnt anschließend den
-  konkreten `fitness-app`-Commit.
+- Fitness nutzt den Sibling-Checkout (`skills-dev` lokal / `skills-app` in VitalOS)
+  auf Branch `master`; Shell-Pin über `vos-release`/`vos-ship`.
+- Standalone-Release: `dev` → `master` (Auto-Promote). Branch `fitness` ist Legacy.
 
 ## Änderungsverlauf
 

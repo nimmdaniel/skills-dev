@@ -104,3 +104,35 @@ _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen sta
   - Punkt 2: 16 Tutorial-only ohne Exact-Caliverse (Fuzzy verboten) → Demo-Loops weiter offen; Handy/Fitness-Merge/Sync Owner-Gates. Task `16c5fba2` nicht AL.
 - Blocker:
   - (keine)
+
+## 2026-11-11 (Mittwoch) — Abteilungsleiter-Lauf
+
+_Automatik (vos-al-log Vorlage 2026-11-11):_
+- Commits seit 2026-11-08: 24d5d0b docs(al): AL-LOG Lauf 2 — Push-Refs f4fede4..6bd2dce
+6bd2dce fix(android): pin JDK 21 for build:android via scripts/build-android.sh
+5958151 docs: auto-update RESULTS.md
+f4fede4 docs(al): AL-LOG 2026-11-10 — APK android-latest auf Tip 70c640f
+e88baf0 docs: auto-update RESULTS.md
+e71d67b docs: auto-update NEXT.md
+264d27a docs: auto-update TODO.md
+70c640f fix(build): prevent Vite 8 Rolldown preload-marker blackscreen
+cbc5122 docs: auto-update NEXT.md
+ebea2ef docs: auto-update RESULTS.md
+55940bc chore(deps): major upgrades to React 19 / Vite 8 / Firebase 13
+e2ade88 chore(deps): lockfile + age-safe pins
+1235339 chore(deps): minor/patch upgrades (age-safe pins)
+1259fa7 build(deps-dev): bump esbuild from 0.27.7 to 0.28.1 (#18)
+ad1126d docs: NEXT.md nach Cherry-Pick-Konflikt wiederherstellen
+- Offene PRs: (keine offenen PRs / gh nicht verfuegbar)
+- CI (letzte Läufe): completed	success	Auto-Promote dev -> master (Check (Skills))	Auto-Promote dev -> master (Check (Skills))	master	schedule	42950340223	8s	2026-11-11T03:05:02Z
+completed	success	PR-AutoMerge (Dependabot -> dev)	PR-AutoMerge (Dependabot -> dev)	master	schedule	42937474829	8s	2026-11-11T01:14:26Z
+completed	success	Auto-Promote dev -> master (Check (Skills))	Auto-Promote dev -> master (Check (Skills))	master	schedule	42923177055	7s	2026-11-10T23:25:01Z
+- Arbeitsbaum: sauber
+
+_Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
+- Erledigt:
+  - Punkt 0: fetch ok; Tip `24d5d0b` = `origin/dev` = `origin/master` (0/0). Live Deploy `42848167841` success (nach `6bd2dce`). TODO Fitness-`Skills/`-Merge: Sibling-Befund (`vite-miniapp-submodules.mjs`, kein Gitlink/`origin/fitness`; lokal `fitness` 98 behind) → Doku CLAUDE/APP/README + TODO/NEXT/RESULTS; Push folgt diesem Commit.
+- Offen/Weiter:
+  - Punkt 2 Rest: Demo-Loops (16 Tutorial-only, Exact-Caliverse/Fuzzy verboten), Handy-Autoplay, Offline-/Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` (+betta/+cto) nicht AL.
+- Blocker:
+  - (keine)

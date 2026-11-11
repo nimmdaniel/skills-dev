@@ -1,8 +1,9 @@
 # Skills
 
 Eigenständige Calisthenics-App mit versioniertem Skills-Katalog, Trainingsrunner
-und nutzerbezogener Progression. Fitness bindet `SkillsCard.jsx` aus dem direkten
-Git-Submodule ein; der Datenbestand gehört ausschließlich Skills.
+und nutzerbezogener Progression. Fitness bindet `SkillsCard.jsx` über den
+Nachbar-Checkout (`skills-app`/`skills-dev`, `vite-miniapp-submodules.mjs`) ein;
+der Datenbestand gehört ausschließlich Skills.
 
 Katalog: `public/skills-catalog.v1.json` (14 Skills / 65 Stufen). Fortschritt und
 Runner liegen in IndexedDB und localStorage, angemeldete Nutzer synchronisieren
@@ -32,13 +33,11 @@ Skill-Tutorials bleiben sichtbar. Bei Medienfehlern bleibt der Runner benutzbar.
 Details und Abnahmegrenzen: [docs/EXERCISE-VIDEOS.md](docs/EXERCISE-VIDEOS.md).
 
 Prüfen: `node scripts/test-exercise-videos.mjs`, anschließend `pnpm run build`.
-Integration: Fitness importiert `Skills/SkillsCard.jsx` direkt aus dem
-Submodule `Skills/` (Branch `fitness` desselben Repos). `~/skills-dev/dev`
-ist die Entwicklungsquelle. Vor einem Fitness-Gitlink-Push den zugehörigen
-Skills-Commit nach `origin/fitness` pushen; keine UI-Dateien kopieren.
-Production-Releases pinnen diesen Gitlink über `~/vitalos/fitness-app`.
-Der VitalOS-Workflow `deploy-skills.yml` baut denselben verschachtelten
-Checkout für `vos-skills.web.app`; `deploy-fitness.yml` baut den Fitness-Host.
+Integration: Fitness mappt `src/views/Skills` auf den Sibling-Checkout
+(`skills-dev` / `skills-app`) — kein `Skills/`-Gitlink, kein `origin/fitness`.
+Entwicklungsquelle: `~/dev/skills-dev` Branch `dev`; Freigabe für Fitness und
+Standalone ist `master`. Shell-Pin: `~/vitalos/skills-app` auf `origin/master`.
+Keine UI-Dateien nach Fitness kopieren.
 
 
 ## Eigenständige Skills-Daten (2026-10-23)
