@@ -9,5 +9,6 @@
 - [x] 2026-10-23: Eigenständigen Calisthenics-Katalog, Progressionsmodell,
   IndexedDB/localStorage und automatischen Firestore-Sync im Worktree bauen.
 - [x] 2026-10-23: Gemeinsame Produktions-Rules um Skills-Vertrag erweitern; Katalog seeden (`docs/SKILLS-DATA.md`, VitalOS-Runs 39962182296 / 39962251260).
-- [ ] Skills-Release und echten Offline-/Zweigeräte-Sync abnehmen.
+- [x] 2026-11-11: Offline-Codepfad re-verifiziert (Testsuite grün; `vite build` + `test:sw` — Worker precache/IDB/Offline-Katalog; Tip `c966a90`, Live Deploy `42954958915`).
+- [ ] Echten Offline-/Zweigeräte-Sync mit Anmeldung abnehmen (Owner-Gate; `docs/SKILLS-DATA.md` Release Schritt 4).
 - [x] 2026-11-10: Debug-APK GitHub-Release `android-latest` hinter Tip ziehen (`70c640f`, sha256 `0144c5af…`; Org-Task `b559bbe6` done).
