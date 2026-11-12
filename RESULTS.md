@@ -1,3 +1,8 @@
+# 2026-11-12 — AL: automerge-pr Dependabot Retarget (Org c1f9b6ce Port)
+
+- journal-SSOT: vor Squash Dependabot-PRs mit `base=master` auf `base=dev` retargeten (nur `dependabot/*`).
+- Feature-Freeze-Wartung/CI; Fremd-WIP Checkout unberührt (Temp-Worktree).
+
 ## 2026-11-12 — CI: Gemini + Merge-Agent wiederhergestellt
 
 - Restored: gemini-ci-repair.yml (Owner: volle Automatisierung)
