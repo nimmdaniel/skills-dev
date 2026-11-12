@@ -153,3 +153,33 @@ _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen sta
   - (keine)
 
 AUTOMATION: `pnpm test` im Temp-Worktree mit symlinktem `node_modules` will Modules-Dir purgen (TTY) — `node`-Direktaufruf der package.json-test-Zeile / `CI=true` — spart Voll-Install pro AL-Lauf.
+
+## 2026-11-12 (Donnerstag) — Abteilungsleiter-Lauf
+
+_Automatik (vos-al-log Vorlage 2026-11-12):_
+- Commits seit 2026-11-08: b27cd88 fix(store): Skills lesbar auf hellem Shell-Hintergrund, Design-Umschalter im Store-Build aus
+0395efa ci: restore Gemini repair + Merge-Agent (full automation)
+e8ec919 docs(agents): simplicity pointer — CI.md §1 spine
+37f34dd ci: drop Gemini repair and Merge-Agent (simplicity)
+2ffc973 docs(al): AL-LOG Lauf 2 — CI-Refs Check/Promote/Deploy
+a239362 docs(al): AL-LOG Lauf 2 — Push-Refs c966a90..9d14bad
+9d14bad docs(al): Offline/SW re-check + AL-LOG Lauf 2
+efef9d4 docs: auto-update RESULTS.md
+6f8567c docs: auto-update TODO.md
+c966a90 docs(al): AL-LOG 2026-11-11 — Push-Refs 24d5d0b..b39281a
+b39281a docs(al): Fitness-Skills-Merge als Sibling-Checkout dokumentieren
+b522333 docs: auto-update RESULTS.md
+0fe0e96 docs: auto-update NEXT.md
+b9ce986 docs: auto-update TODO.md
+3aa72a7 docs: auto-update CLAUDE.md
+- Offene PRs: 22	Calm classic Skills design	cursor/classic-calm-design-8783	DRAFT	2026-11-12T12:56:36Z
+20	feat(legal): Datenschutz + öffentliche Löschanfrage-Seite (#19)	nimmdaniel:feat/legal-pages-19	OPEN	2026-11-11T21:04:31Z
+- CI (letzte Läufe): completed	skipped	PR-AutoMerge (Dependabot -> dev)	PR-AutoMerge (Dependabot -> dev)	master	workflow_run	43224344718	1s	2026-11-12T13:07:51Z
+completed	success	Gemini CI Agent	Gemini CI Agent	master	workflow_run	43224344586	10s	2026-11-12T13:07:51Z
+completed	skipped	Auto-Promote dev -> master (Check (Skills))	Auto-Promote dev -> master (Check (Skills))	master	workflow_run	43224344583	1s	2026-11-12T13:07:51Z
+- Arbeitsbaum: 3 uncommittete Pfade
+
+_Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
+- Erledigt: CTO-Nacht Port Org `c1f9b6ce` — `.github/workflows/automerge-pr.yml` journal-SSOT Retarget (nur `dependabot/*`, base=master→dev vor Squash); RESULTS/NEXT. Tip vor Push `6073486`; Commit folgt auf `dev`.
+- Offen/Weiter: Punkt 2 Rest Demo-Loops / Handy-Autoplay / Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` (+betta/+cto): kein Dependabot-PR offen (kein Dep-Lauf-Beleg heute). Feature-Freeze. Fleet-Restport `c1f9b6ce` (fuel/relax/plan/6pack/coach).
+- Blocker: keine. Fremd-WIP Checkout (`docs/apps.*`, `scripts/portal.mjs`) + lokaler Tip `b27cd88` (1 ahead/1 behind) unberührt; Arbeit im Temp-Worktree.
