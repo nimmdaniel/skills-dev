@@ -931,7 +931,7 @@ export default function SkillsCard({ onWorkoutComplete, embedded = false, route,
   return (
     <section
       className="rounded-[2rem] p-5 sm:p-6"
-      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))', border: '1px solid var(--line)' }}
+      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), var(--bg)', color: 'var(--ink)', border: '1px solid var(--line)' }}
     >
       <div className="mb-5">
         <div className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: 'var(--dim)', opacity: 0.7 }}>Calisthenics</div>

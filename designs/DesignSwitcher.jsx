@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Palette, Check } from 'lucide-react';
 import { DESIGNS } from './index.js';
+import { IS_STORE_BUILD } from '../storeBuild.js';
 
 const OPTIONS = [
   { id: 'classic', name: 'Original', hint: 'Aktuelle App · Charts & Hold-Timer', swatch: ['#0a0a0a', '#c8ff00', '#38bdf8'] },
@@ -9,7 +10,13 @@ const OPTIONS = [
 
 // Schwebender Design-Umschalter. Eigene, neutrale Optik, damit er in jedem Design lesbar bleibt;
 // verschwindet während eines laufenden Workouts in einer Variante (Event „skills-runner“).
-export default function DesignSwitcher({ value, onChange }) {
+export default function DesignSwitcher(props) {
+  // Store-Build: Design-Experimente (Original/Iron Room/…) gehören nicht in die Produkt-App.
+  if (IS_STORE_BUILD) return null;
+  return <DesignSwitcherMenu {...props} />;
+}
+
+function DesignSwitcherMenu({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const box = useRef(null);
