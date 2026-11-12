@@ -180,6 +180,6 @@ completed	skipped	Auto-Promote dev -> master (Check (Skills))	Auto-Promote dev -
 - Arbeitsbaum: 3 uncommittete Pfade
 
 _Vom AL ausfüllen (knapp & belegbar, je 1–3 Zeilen, Commit-/PR-Referenzen statt Erzählung):_
-- Erledigt: CTO-Nacht Port Org `c1f9b6ce` — `.github/workflows/automerge-pr.yml` journal-SSOT Retarget (nur `dependabot/*`, base=master→dev vor Squash); RESULTS/NEXT. Tip vor Push `6073486`; Commit folgt auf `dev`.
-- Offen/Weiter: Punkt 2 Rest Demo-Loops / Handy-Autoplay / Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` (+betta/+cto): kein Dependabot-PR offen (kein Dep-Lauf-Beleg heute). Feature-Freeze. Fleet-Restport `c1f9b6ce` (fuel/relax/plan/6pack/coach).
-- Blocker: keine. Fremd-WIP Checkout (`docs/apps.*`, `scripts/portal.mjs`) + lokaler Tip `b27cd88` (1 ahead/1 behind) unberührt; Arbeit im Temp-Worktree.
+- Erledigt: CTO-Nacht Port Org `c1f9b6ce` — `.github/workflows/automerge-pr.yml` journal-SSOT Retarget (nur `dependabot/*`, base=master→dev); Push `6073486..ed2a84e`; Check `43251340937` success; Auto-Promote `43251416022` success → `origin/master=ed2a84e`.
+- Offen/Weiter: Punkt 2 Rest Demo-Loops / Handy-Autoplay / Zweigeräte-Sync — Owner-Gates. Task `16c5fba2` (+betta/+cto): kein Dependabot-PR offen. Feature-Freeze. Fleet-Restport `c1f9b6ce` (fuel/relax/plan/6pack/coach).
+- Blocker: keine. Fremd-WIP Checkout (`docs/apps.*`, `scripts/portal.mjs`) + lokaler Tip `b27cd88` unberührt.
