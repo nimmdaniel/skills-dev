@@ -12,6 +12,7 @@
 - [x] Feste Progression, EXP-Freischaltung, Stoppuhr-Runner ohne Countdowns, Slider-Anpassung
 - [x] Release: dev → master + Shell-Pin, Rules (Owner-Delete) live, Debug-APK als GitHub-Release `android-latest`
 - [x] 2026-11-10: Debug-APK `android-latest` neu gebaut/hochgeladen aus Tip `70c640f` (Task `b559bbe6` done; JDK 21)
+- [x] CTO-Nacht `c1f9b6ce` Port: `automerge-pr.yml` Dependabot base=master→dev Retarget (journal-SSOT) — AL 2026-11-12.
 - [ ] Geräteabnahme am Android-Handy (Anruf, Bildschirmsperre, Zurück-Geste, Neustart)
 - [ ] Native Google-Anmeldung (Capacitor-Plugin + SHA-1/OAuth in Firebase — braucht Konsole)
 - [ ] Datenschutzerklärung + öffentliche Löschanfrage-Seite, Release-Signierung (`SKILLS_UPLOAD_*`), Play-Eintrag
